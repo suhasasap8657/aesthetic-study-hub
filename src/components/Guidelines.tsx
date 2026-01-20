@@ -1,89 +1,89 @@
-import { Target, BookOpen, Brain, Heart, TrendingUp } from "lucide-react";
-
-const guidelinesData = [
-  {
-    icon: Target,
-    title: "Under 1k Rank Strategy",
-    points: [
-      "NCERT 10+ reads (Bio line-by-line)",
-      "PYQs 2000+ (NEET focus)",
-      "Mocks 100+ (analysis 2 hrs each)",
-      "Target: Bio 340+, Chem 170+, Phy 160+"
-    ],
-    color: "from-pastel-blue to-pastel-purple"
-  },
-  {
-    icon: BookOpen,
-    title: "PYQ Strategy",
-    points: [
-      "Per day 40-60 questions",
-      "30 NEET 2020-25",
-      "20 JEE 2023-25",
-      "10 Exemplar",
-      "Time-bound: 1 min/QS, 5 min stuck rule"
-    ],
-    color: "from-pastel-green to-pastel-blue"
-  },
-  {
-    icon: Brain,
-    title: "College Priority",
-    points: [
-      "Jan mein clear",
-      "Husbandry/diseases/pests/ethology priority",
-      "Feb break rev if leftover"
-    ],
-    color: "from-pastel-pink to-pastel-purple"
-  },
-  {
-    icon: Heart,
-    title: "Health & Tracking",
-    points: [
-      "Sleep 7-8 hrs mandatory",
-      "Exercise daily",
-      "Weekly Sunday light rev + 100 PYQs",
-      "Jan 31 college mock target"
-    ],
-    color: "from-pastel-yellow to-pastel-pink"
-  },
-  {
-    icon: TrendingUp,
-    title: "Resources",
-    points: [
-      "Bio one-shots: Seep Pahuja",
-      "Chem: Yogesh Jain",
-      "Physics: PW",
-      "Rev weekly, error logs daily"
-    ],
-    color: "from-pastel-purple to-pastel-blue"
-  }
-];
+import { CheckCircle, BookOpen, Users, Target } from "lucide-react";
 
 const Guidelines = () => {
+  const guidelines = [
+    {
+      title: "Daily Revision",
+      points: [
+        "Revise daily what you studied",
+        "Make error log daily where you make mistakes",
+        "Mention solution to those mistakes in error log",
+        "Note down new conceptual or anything new you learn in a QS that is useful",
+      ],
+      icon: BookOpen,
+      color: "from-pastel-blue to-pastel-green",
+    },
+    {
+      title: "Mock Test Strategy",
+      points: [
+        "After every mock: Analyse thoroughly",
+        "Point out every error and fix them",
+        "Note down all mistakes in error log",
+        "Don't repeat the same mistakes",
+        "2 mocks per day from Mar 15 - May 1 (~100 mocks total)",
+      ],
+      icon: Target,
+      color: "from-pastel-pink to-pastel-purple",
+    },
+    {
+      title: "Weekly & Monthly Revision",
+      points: [
+        "Every Sunday: Revision of entire week",
+        "Every Sunday: NCERT revision",
+        "Every month end: Revision of entire syllabus of that month",
+      ],
+      icon: CheckCircle,
+      color: "from-pastel-green to-pastel-blue",
+    },
+    {
+      title: "Resources",
+      points: [
+        "Organic Chemistry: Yogesh Jain Sir",
+        "Inorganic Chemistry: MD Sir",
+        "Physical Chemistry: Sudanshu Sir",
+        "Biology: Flexible (choose what works for you)",
+      ],
+      icon: Users,
+      color: "from-pastel-purple to-pastel-pink",
+    },
+  ];
+
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {guidelinesData.map((item, index) => {
-        const Icon = item.icon;
-        return (
-          <div
-            key={index}
-            className="glass-card rounded-2xl p-5 hover:shadow-glow transition-all duration-500 animate-fade-in"
-            style={{ animationDelay: `${index * 100}ms` }}
-          >
-            <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center mb-4`}>
-              <Icon className="w-6 h-6 text-white" />
+    <div className="space-y-4 animate-fade-in">
+      <div className="glass-strong rounded-2xl p-5">
+        <h2 className="text-2xl font-bold gradient-text mb-2">Study Guidelines</h2>
+        <p className="text-muted-foreground text-sm">
+          Follow these guidelines consistently for under 1k rank success!
+        </p>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-4">
+        {guidelines.map((guideline, index) => {
+          const Icon = guideline.icon;
+          return (
+            <div
+              key={index}
+              className="glass-card rounded-2xl p-5 animate-fade-in"
+              style={{ animationDelay: `${index * 100}ms` }}
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${guideline.color} flex items-center justify-center`}>
+                  <Icon className="w-5 h-5 text-white" />
+                </div>
+                <h3 className="font-bold text-lg">{guideline.title}</h3>
+              </div>
+              <ul className="space-y-2">
+                {guideline.points.map((point, i) => (
+                  <li key={i} className="flex items-start gap-2 text-sm">
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
+                    <span className="text-foreground/80">{point}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
-            <h3 className="font-bold text-lg mb-3 gradient-text">{item.title}</h3>
-            <ul className="space-y-2">
-              {item.points.map((point, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-foreground/80">
-                  <span className="w-1.5 h-1.5 rounded-full bg-gradient-pastel mt-2 flex-shrink-0" />
-                  {point}
-                </li>
-              ))}
-            </ul>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 };

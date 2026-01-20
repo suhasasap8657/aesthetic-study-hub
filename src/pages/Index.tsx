@@ -5,10 +5,10 @@ import DailyRoutineTable from "@/components/DailyRoutineTable";
 import Guidelines from "@/components/Guidelines";
 import QuoteCard from "@/components/QuoteCard";
 import MonthPlan from "@/components/MonthPlan";
-import { januaryPlan, februaryPlan, marchPlan, aprilPlan } from "@/data/monthlyPlans";
+import { januaryPlan, februaryPlan, marchPlan } from "@/data/monthlyPlans";
 import backgroundImage from "@/assets/background.jpg";
 
-type Tab = "home" | "guidelines" | "routine" | "january" | "february" | "march" | "april";
+type Tab = "home" | "guidelines" | "routine" | "january" | "february" | "march";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<Tab>("home");
@@ -20,7 +20,6 @@ const Index = () => {
     { id: "january" as Tab, label: "January", icon: <Calendar className="w-4 h-4" /> },
     { id: "february" as Tab, label: "February", icon: <Calendar className="w-4 h-4" /> },
     { id: "march" as Tab, label: "March", icon: <Calendar className="w-4 h-4" /> },
-    { id: "april" as Tab, label: "April", icon: <Calendar className="w-4 h-4" /> },
   ];
 
   const renderContent = () => {
@@ -34,20 +33,19 @@ const Index = () => {
                 <BookOpen className="w-10 h-10 text-white" />
               </div>
               <h1 className="text-4xl md:text-5xl font-bold mb-3">
-                Welcome, <span className="gradient-text">Suhas</span>! 🌟
+                Welcome, <span className="gradient-text">Mischile</span>! 🌟
               </h1>
               <p className="text-lg text-foreground/80 max-w-2xl mx-auto">
-                Your personalized NEET 2026 study planner. Target: Under 1k rank (650+ marks). 
-                College exams integrated. Let's achieve this together!
+                Your personalized NEET 2026 study planner. Target: Under 1k rank (660+ marks). 
+                Let's achieve this together!
               </p>
               
               {/* Stats */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
+              <div className="grid grid-cols-3 gap-4 mt-8">
                 {[
                   { label: "Target Rank", value: "<1000", color: "from-pastel-blue to-pastel-purple" },
-                  { label: "Target Score", value: "650+", color: "from-pastel-green to-pastel-blue" },
-                  { label: "PYQs Goal", value: "2000+", color: "from-pastel-pink to-pastel-purple" },
-                  { label: "Mocks Goal", value: "100+", color: "from-pastel-yellow to-pastel-pink" },
+                  { label: "Target Score", value: "660+", color: "from-pastel-green to-pastel-blue" },
+                  { label: "Mocks Goal", value: "100+", color: "from-pastel-pink to-pastel-purple" },
                 ].map((stat, i) => (
                   <div
                     key={i}
@@ -78,15 +76,11 @@ const Index = () => {
                 <ul className="space-y-2 text-sm">
                   <li className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-pastel-blue" />
-                    Organic Chemistry completion
+                    Chemistry (60-70 QS daily)
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-pastel-green" />
-                    Bio college priority chapters
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-pastel-pink" />
-                    40-60 PYQs daily
+                    Biology (80-90 QS daily)
                   </li>
                 </ul>
               </div>
@@ -105,15 +99,15 @@ const Index = () => {
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="font-medium text-pastel-green">Feb:</span>
-                    Chemistry Complete + Break
+                    Physical Chem + 1 chapter Inorganic
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="font-medium text-pastel-pink">Mar:</span>
-                    Physics + Mock Phase
+                    Chem done by 6th, Physics starts 1st
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="font-medium text-pastel-purple">Apr:</span>
-                    Heavy Mocks + Final Rev
+                    <span className="font-medium text-pastel-purple">Mar 15 - May 1:</span>
+                    2 mocks/day (~100 mocks)
                   </li>
                 </ul>
               </div>
@@ -130,8 +124,6 @@ const Index = () => {
         return <MonthPlan {...februaryPlan} />;
       case "march":
         return <MonthPlan {...marchPlan} />;
-      case "april":
-        return <MonthPlan {...aprilPlan} />;
       default:
         return null;
     }
@@ -157,7 +149,7 @@ const Index = () => {
                   <BookOpen className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h1 className="font-bold text-lg gradient-text">Suhas NEET Planner</h1>
+                  <h1 className="font-bold text-lg gradient-text">Mischile NEET Planner</h1>
                   <p className="text-xs text-muted-foreground">NEET 2026 • Under 1k Rank</p>
                 </div>
               </div>
@@ -202,7 +194,7 @@ const Index = () => {
         <footer className="glass border-t border-white/20 mt-auto">
           <div className="container mx-auto px-4 py-4 text-center">
             <p className="text-sm text-muted-foreground">
-              Made with 💙 for Suhas • NEET 2026 Under 1k Rank Journey
+              Welcome Mischile, made with love by your man :)
             </p>
           </div>
         </footer>

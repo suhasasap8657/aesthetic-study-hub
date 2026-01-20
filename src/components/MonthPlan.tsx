@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect } from "react";
 import DayAccordion from "./DayAccordion";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
 
 interface DayPlan {
   date: string;
@@ -14,7 +15,36 @@ interface MonthPlanProps {
 }
 
 const MonthPlan = ({ month, focus, days }: MonthPlanProps) => {
-  const [dayPlans, setDayPlans] = useState(days);
+  // Create a unique storage key based on month name
+  const storageKey = `neet-planner-${month.replace(/\s+/g, '-').toLowerCase()}`;
+  
+  const [dayPlans, setDayPlans] = useLocalStorage<DayPlan[]>(storageKey, days);
+
+  // Update localStorage if initial days data structure changes (new tasks added)
+  useEffect(() => {
+    // Check if any new tasks were added to the plan
+    const storedTaskIds = new Set(dayPlans.flatMap(d => d.tasks.map(t => t.id)));
+    const newTaskIds = days.flatMap(d => d.tasks.map(t => t.id));
+    const hasNewTasks = newTaskIds.some(id => !storedTaskIds.has(id));
+    
+    if (hasNewTasks) {
+      // Merge: keep completed status from stored, add new tasks from days
+      const merged = days.map(day => {
+        const storedDay = dayPlans.find(d => d.date === day.date);
+        if (storedDay) {
+          return {
+            ...day,
+            tasks: day.tasks.map(task => {
+              const storedTask = storedDay.tasks.find(t => t.id === task.id);
+              return storedTask ? { ...task, completed: storedTask.completed } : task;
+            })
+          };
+        }
+        return day;
+      });
+      setDayPlans(merged);
+    }
+  }, [days]);
 
   const toggleTask = (dayIndex: number, taskId: string) => {
     setDayPlans(prev => 
