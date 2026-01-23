@@ -2,95 +2,95 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&family=Quicksand:wght@400;500;600;700&display=swap');
 
 @layer base {
   :root {
-    /* Pastel aesthetic palette */
-    --background: 210 40% 98%;
-    --foreground: 222 47% 11%;
+    /* Anime aesthetic palette - warm pinks and purples */
+    --background: 280 20% 10%;
+    --foreground: 300 20% 95%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card: 280 25% 15%;
+    --card-foreground: 300 20% 95%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover: 280 25% 15%;
+    --popover-foreground: 300 20% 95%;
 
-    /* Soft blue primary */
-    --primary: 213 94% 78%;
-    --primary-foreground: 222 47% 11%;
+    /* Sakura pink primary */
+    --primary: 330 80% 70%;
+    --primary-foreground: 280 20% 10%;
 
-    /* Mint green secondary */
-    --secondary: 142 76% 73%;
-    --secondary-foreground: 142 76% 20%;
+    /* Lavender secondary */
+    --secondary: 270 60% 70%;
+    --secondary-foreground: 280 20% 10%;
 
-    /* Soft pink accent */
-    --accent: 351 95% 81%;
-    --accent-foreground: 351 95% 20%;
+    /* Warm peach accent */
+    --accent: 15 80% 75%;
+    --accent-foreground: 280 20% 10%;
 
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 280 15% 25%;
+    --muted-foreground: 280 15% 65%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 70% 55%;
+    --destructive-foreground: 300 20% 95%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 213 94% 78%;
+    --border: 280 20% 25%;
+    --input: 280 20% 25%;
+    --ring: 330 80% 70%;
 
     --radius: 1rem;
 
-    /* Glass effect variables */
-    --glass-bg: 255 255 255 / 0.15;
-    --glass-border: 255 255 255 / 0.25;
-    --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+    /* Glass effect variables - anime style */
+    --glass-bg: 280 25% 15% / 0.7;
+    --glass-border: 300 40% 80% / 0.2;
+    --glass-shadow: 0 8px 32px 0 rgba(180, 100, 180, 0.25);
 
-    /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(213 94% 78%) 0%, hsl(142 76% 73%) 50%, hsl(351 95% 81%) 100%);
-    --gradient-glass: linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.1) 100%);
-    --gradient-text: linear-gradient(135deg, hsl(213 94% 60%) 0%, hsl(351 95% 65%) 100%);
+    /* Gradients - anime warm tones */
+    --gradient-primary: linear-gradient(135deg, hsl(330 80% 70%) 0%, hsl(270 60% 70%) 50%, hsl(15 80% 75%) 100%);
+    --gradient-glass: linear-gradient(135deg, rgba(255, 200, 220, 0.2) 0%, rgba(200, 180, 255, 0.1) 100%);
+    --gradient-text: linear-gradient(135deg, hsl(330 80% 75%) 0%, hsl(270 60% 75%) 100%);
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 280 20% 12%;
+    --sidebar-foreground: 300 20% 90%;
+    --sidebar-primary: 330 80% 70%;
+    --sidebar-primary-foreground: 280 20% 10%;
+    --sidebar-accent: 280 25% 20%;
+    --sidebar-accent-foreground: 300 20% 95%;
+    --sidebar-border: 280 20% 25%;
+    --sidebar-ring: 330 80% 70%;
   }
 
   .dark {
-    --background: 222 47% 8%;
-    --foreground: 210 40% 98%;
+    --background: 280 20% 8%;
+    --foreground: 300 20% 95%;
 
-    --card: 222 47% 12%;
-    --card-foreground: 210 40% 98%;
+    --card: 280 25% 12%;
+    --card-foreground: 300 20% 95%;
 
-    --popover: 222 47% 12%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 280 25% 12%;
+    --popover-foreground: 300 20% 95%;
 
-    --primary: 213 94% 68%;
-    --primary-foreground: 222 47% 11%;
+    --primary: 330 80% 65%;
+    --primary-foreground: 280 20% 10%;
 
-    --secondary: 142 76% 50%;
-    --secondary-foreground: 142 76% 95%;
+    --secondary: 270 60% 65%;
+    --secondary-foreground: 280 20% 10%;
 
-    --accent: 351 95% 71%;
-    --accent-foreground: 351 95% 95%;
+    --accent: 15 80% 70%;
+    --accent-foreground: 280 20% 10%;
 
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 280 15% 20%;
+    --muted-foreground: 280 15% 60%;
 
     --destructive: 0 63% 31%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 300 20% 95%;
 
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 213 94% 68%;
+    --border: 280 20% 20%;
+    --input: 280 20% 20%;
+    --ring: 330 80% 65%;
 
-    --glass-bg: 0 0 0 / 0.25;
-    --glass-border: 255 255 255 / 0.1;
+    --glass-bg: 280 25% 10% / 0.8;
+    --glass-border: 300 40% 70% / 0.15;
   }
 }
 
@@ -101,38 +101,38 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Outfit', 'Inter', sans-serif;
+    font-family: 'Quicksand', 'Outfit', 'Inter', sans-serif;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Outfit', 'Quicksand', sans-serif;
   }
 }
 
 @layer components {
-  /* Glass morphism effect */
+  /* Glass morphism effect - anime style */
   .glass {
-    background: rgba(255, 255, 255, 0.15);
+    background: hsl(280 25% 15% / 0.75);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.25);
+    border: 1px solid hsl(300 40% 80% / 0.2);
     box-shadow: var(--glass-shadow);
   }
 
   .glass-card {
-    background: rgba(255, 255, 255, 0.25);
+    background: hsl(280 25% 18% / 0.8);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+    border: 1px solid hsl(300 40% 80% / 0.15);
+    box-shadow: 0 8px 32px 0 rgba(180, 100, 180, 0.15);
   }
 
   .glass-strong {
-    background: rgba(255, 255, 255, 0.4);
+    background: hsl(280 25% 20% / 0.85);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+    border: 1px solid hsl(300 40% 80% / 0.25);
+    box-shadow: 0 8px 32px 0 rgba(180, 100, 180, 0.2);
   }
 
   /* Gradient text */
@@ -145,37 +145,45 @@
 
   /* Tab styles */
   .tab-active {
-    background: rgba(255, 255, 255, 0.4);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    background: hsl(330 80% 70% / 0.3);
+    box-shadow: 0 4px 15px rgba(255, 150, 200, 0.2);
   }
 
   /* Checkbox custom */
   .checkbox-aesthetic {
-    @apply w-5 h-5 rounded-md border-2 border-primary/50 bg-white/50 backdrop-blur transition-all duration-300;
+    @apply w-5 h-5 rounded-md border-2 border-primary/50 bg-muted/50 backdrop-blur transition-all duration-300;
   }
 
   .checkbox-aesthetic:checked {
     @apply bg-primary border-primary;
   }
 
-  /* Scrollbar styling */
+  /* Scrollbar styling - anime themed */
   ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
 
   ::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.1);
+    background: hsl(280 20% 15%);
     border-radius: 10px;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: rgba(147, 197, 253, 0.5);
+    background: hsl(330 60% 60% / 0.5);
     border-radius: 10px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(147, 197, 253, 0.7);
+    background: hsl(330 60% 60% / 0.7);
+  }
+
+  /* Strikethrough animation for completed tasks */
+  .task-completed {
+    text-decoration: line-through;
+    text-decoration-color: hsl(330 80% 70%);
+    opacity: 0.6;
+    transition: all 0.3s ease;
   }
 }
 
@@ -221,6 +229,24 @@
     }
   }
 
+  @keyframes glow {
+    0%, 100% {
+      box-shadow: 0 0 20px hsl(330 80% 70% / 0.3);
+    }
+    50% {
+      box-shadow: 0 0 40px hsl(330 80% 70% / 0.5);
+    }
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% center;
+    }
+    100% {
+      background-position: 200% center;
+    }
+  }
+
   .animate-fade-in {
     animation: fade-in 0.6s ease-out forwards;
   }
@@ -235,6 +261,10 @@
 
   .animate-slide-in {
     animation: slide-in 0.4s ease-out forwards;
+  }
+
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite;
   }
 
   .animation-delay-100 {
