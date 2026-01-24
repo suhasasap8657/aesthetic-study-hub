@@ -62,57 +62,57 @@ const CountdownTimer = () => {
   };
 
   return (
-    <div className="glass-card rounded-2xl p-5 animate-fade-in">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-bold text-lg flex items-center gap-2">
-          <span className="w-8 h-8 rounded-lg bg-gradient-pastel flex items-center justify-center">
-            <Timer className="w-4 h-4 text-white" />
+    <div className="glass-card rounded-2xl p-4 sm:p-5 animate-fade-in">
+      <div className="flex items-center justify-between mb-3 sm:mb-4">
+        <h3 className="font-bold text-base sm:text-lg flex items-center gap-2">
+          <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-pastel flex items-center justify-center">
+            <Timer className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
           </span>
-          Countdown Timers
+          Countdown
         </h3>
         <Button
           variant="ghost"
           size="sm"
           onClick={() => setShowAddForm(!showAddForm)}
-          className="text-primary hover:bg-primary/20"
+          className="text-primary hover:bg-primary/20 h-8 w-8 p-0"
         >
           <Plus className="w-4 h-4" />
         </Button>
       </div>
 
       {showAddForm && (
-        <div className="mb-4 p-3 bg-muted/30 rounded-xl space-y-2 animate-fade-in">
+        <div className="mb-3 sm:mb-4 p-2.5 sm:p-3 bg-muted/30 rounded-xl space-y-2 animate-fade-in">
           <Input
             placeholder="Timer title (e.g., Mock Test)"
             value={newTitle}
             onChange={(e) => setNewTitle(e.target.value)}
-            className="bg-background/50 border-border"
+            className="bg-background/50 border-border text-sm"
           />
           <div className="flex gap-2">
             <Input
               type="date"
               value={newDate}
               onChange={(e) => setNewDate(e.target.value)}
-              className="bg-background/50 border-border flex-1"
+              className="bg-background/50 border-border flex-1 text-sm"
             />
             <Input
               type="time"
               value={newTime}
               onChange={(e) => setNewTime(e.target.value)}
-              className="bg-background/50 border-border w-28"
+              className="bg-background/50 border-border w-24 sm:w-28 text-sm"
             />
           </div>
-          <Button onClick={addCountdown} className="w-full bg-gradient-pastel text-white">
+          <Button onClick={addCountdown} className="w-full bg-gradient-pastel text-white text-sm">
             Add Timer
           </Button>
         </div>
       )}
 
-      <div className="space-y-3">
+      <div className="space-y-2 sm:space-y-3">
         {countdowns.map((countdown, index) => (
           <div
             key={index}
-            className="relative p-4 bg-muted/20 rounded-xl border border-border/50 animate-slide-in"
+            className="relative p-3 sm:p-4 bg-muted/20 rounded-xl border border-border/50 animate-slide-in"
             style={{ animationDelay: `${index * 100}ms` }}
           >
             <button
@@ -121,25 +121,25 @@ const CountdownTimer = () => {
             >
               <X className="w-3 h-3 text-muted-foreground" />
             </button>
-            <p className="text-sm font-medium text-primary mb-2">{countdown.title}</p>
-            <div className="grid grid-cols-4 gap-2 text-center">
+            <p className="text-xs sm:text-sm font-medium text-primary mb-2">{countdown.title}</p>
+            <div className="grid grid-cols-4 gap-1.5 sm:gap-2 text-center">
               {timeLeft[index] && (
                 <>
-                  <div className="bg-midnight/50 rounded-lg p-2">
-                    <span className="text-xl font-bold text-sakura">{timeLeft[index].days}</span>
-                    <p className="text-[10px] text-muted-foreground">DAYS</p>
+                  <div className="bg-midnight/50 rounded-lg p-1.5 sm:p-2">
+                    <span className="text-lg sm:text-xl font-bold text-sakura">{timeLeft[index].days}</span>
+                    <p className="text-[8px] sm:text-[10px] text-muted-foreground">DAYS</p>
                   </div>
-                  <div className="bg-midnight/50 rounded-lg p-2">
-                    <span className="text-xl font-bold text-lavender">{timeLeft[index].hours}</span>
-                    <p className="text-[10px] text-muted-foreground">HRS</p>
+                  <div className="bg-midnight/50 rounded-lg p-1.5 sm:p-2">
+                    <span className="text-lg sm:text-xl font-bold text-lavender">{timeLeft[index].hours}</span>
+                    <p className="text-[8px] sm:text-[10px] text-muted-foreground">HRS</p>
                   </div>
-                  <div className="bg-midnight/50 rounded-lg p-2">
-                    <span className="text-xl font-bold text-peach">{timeLeft[index].minutes}</span>
-                    <p className="text-[10px] text-muted-foreground">MIN</p>
+                  <div className="bg-midnight/50 rounded-lg p-1.5 sm:p-2">
+                    <span className="text-lg sm:text-xl font-bold text-peach">{timeLeft[index].minutes}</span>
+                    <p className="text-[8px] sm:text-[10px] text-muted-foreground">MIN</p>
                   </div>
-                  <div className="bg-midnight/50 rounded-lg p-2">
-                    <span className="text-xl font-bold text-secondary">{timeLeft[index].seconds}</span>
-                    <p className="text-[10px] text-muted-foreground">SEC</p>
+                  <div className="bg-midnight/50 rounded-lg p-1.5 sm:p-2">
+                    <span className="text-lg sm:text-xl font-bold text-secondary">{timeLeft[index].seconds}</span>
+                    <p className="text-[8px] sm:text-[10px] text-muted-foreground">SEC</p>
                   </div>
                 </>
               )}
