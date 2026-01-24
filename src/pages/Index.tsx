@@ -31,30 +31,6 @@ const Index = () => {
       case "home":
         return (
           <div className="space-y-6 animate-fade-in">
-            <div className="glass-strong rounded-3xl p-8 text-center">
-              <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-pastel flex items-center justify-center animate-float">
-                <BookOpen className="w-10 h-10 text-white" />
-              </div>
-              <h1 className="text-4xl md:text-5xl font-bold mb-3">
-                Welcome, <span className="gradient-text">Mischile</span>! 🌟
-              </h1>
-              <p className="text-lg text-foreground/80 max-w-2xl mx-auto">
-                Your personalized NEET 2026 study planner. Target: Under 1k rank (660+ marks). Let's achieve this together!
-              </p>
-              <div className="grid grid-cols-3 gap-4 mt-8">
-                {[
-                  { label: "Target Rank", value: "<1000", color: "text-sakura" },
-                  { label: "Target Score", value: "660+", color: "text-lavender" },
-                  { label: "Mocks Goal", value: "100+", color: "text-peach" },
-                ].map((stat, i) => (
-                  <div key={i} className="glass-card rounded-xl p-4 animate-fade-in" style={{ animationDelay: `${i * 100}ms` }}>
-                    <div className={`text-2xl md:text-3xl font-bold ${stat.color}`}>{stat.value}</div>
-                    <div className="text-sm text-muted-foreground">{stat.label}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
             <QuoteCard />
 
             <div className="grid md:grid-cols-2 gap-4">
@@ -62,10 +38,9 @@ const Index = () => {
               <AlarmClock />
             </div>
 
-            <div className="grid md:grid-cols-2 gap-4">
-              <ProgressGraph />
-              <ProgressCalendar />
-            </div>
+            <ProgressCalendar />
+
+            <ProgressGraph />
 
             <div className="grid md:grid-cols-2 gap-4">
               <div className="glass-card rounded-2xl p-5">
