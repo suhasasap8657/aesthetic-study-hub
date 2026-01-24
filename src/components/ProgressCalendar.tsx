@@ -1,6 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { CalendarDays, Check, X, ChevronLeft, ChevronRight } from "lucide-react";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { Button } from "@/components/ui/button";
 
 interface DailyProgress {
@@ -11,7 +10,26 @@ interface DailyProgress {
 
 const ProgressCalendar = () => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [progressData] = useLocalStorage<DailyProgress[]>("neet-calendar-progress", []);
+  const [progressData, setProgressData] = useState<DailyProgress[]>([]);
+
+  const loadProgressData = useCallback(() => {
+    const stored = localStorage.getItem("neet-calendar-progress");
+    if (stored) {
+      setProgressData(JSON.parse(stored));
+    }
+  }, []);
+
+  useEffect(() => {
+    loadProgressData();
+    
+    // Listen for storage changes
+    const handleStorageChange = () => {
+      loadProgressData();
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [loadProgressData]);
 
   const monthDays = useMemo(() => {
     const year = currentMonth.getFullYear();
@@ -60,43 +78,45 @@ const ProgressCalendar = () => {
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
   };
 
-  const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const weekDays = ["S", "M", "T", "W", "T", "F", "S"];
+  const weekDaysFull = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   return (
-    <div className="glass-card rounded-2xl p-5 animate-fade-in">
+    <div className="glass-card rounded-2xl p-4 sm:p-5 animate-fade-in">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-bold text-lg flex items-center gap-2">
-          <span className="w-8 h-8 rounded-lg bg-gradient-pastel flex items-center justify-center">
-            <CalendarDays className="w-4 h-4 text-white" />
+        <h3 className="font-bold text-base sm:text-lg flex items-center gap-2">
+          <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-pastel flex items-center justify-center">
+            <CalendarDays className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
           </span>
           Progress Calendar
         </h3>
       </div>
 
       {/* Month Navigation */}
-      <div className="flex items-center justify-between mb-4">
-        <Button variant="ghost" size="sm" onClick={prevMonth}>
+      <div className="flex items-center justify-between mb-3 sm:mb-4">
+        <Button variant="ghost" size="sm" onClick={prevMonth} className="h-8 w-8 p-0">
           <ChevronLeft className="w-4 h-4" />
         </Button>
-        <span className="font-medium">
+        <span className="font-medium text-sm sm:text-base">
           {currentMonth.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
         </span>
-        <Button variant="ghost" size="sm" onClick={nextMonth}>
+        <Button variant="ghost" size="sm" onClick={nextMonth} className="h-8 w-8 p-0">
           <ChevronRight className="w-4 h-4" />
         </Button>
       </div>
 
       {/* Week Days Header */}
-      <div className="grid grid-cols-7 gap-1 mb-2">
-        {weekDays.map((day) => (
-          <div key={day} className="text-center text-xs text-muted-foreground py-1">
-            {day}
+      <div className="grid grid-cols-7 gap-0.5 sm:gap-1 mb-1 sm:mb-2">
+        {weekDays.map((day, i) => (
+          <div key={i} className="text-center text-[10px] sm:text-xs text-muted-foreground py-1">
+            <span className="sm:hidden">{day}</span>
+            <span className="hidden sm:inline">{weekDaysFull[i]}</span>
           </div>
         ))}
       </div>
 
       {/* Calendar Grid */}
-      <div className="grid grid-cols-7 gap-1">
+      <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
         {monthDays.map((date, index) => {
           if (!date) {
             return <div key={`empty-${index}`} className="aspect-square" />;
@@ -109,7 +129,7 @@ const ProgressCalendar = () => {
             <div
               key={date.toISOString()}
               className={`
-                aspect-square rounded-lg flex flex-col items-center justify-center text-xs
+                aspect-square rounded-md sm:rounded-lg flex flex-col items-center justify-center text-[10px] sm:text-xs
                 transition-all duration-200 relative
                 ${isToday ? "ring-2 ring-primary" : ""}
                 ${status === "future" ? "bg-muted/10 text-muted-foreground" : ""}
@@ -120,10 +140,10 @@ const ProgressCalendar = () => {
               `}
             >
               <span className="font-medium">{date.getDate()}</span>
-              {status === "complete" && <Check className="w-3 h-3 mt-0.5" />}
-              {status === "incomplete" && <X className="w-3 h-3 mt-0.5" />}
+              {status === "complete" && <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 mt-0.5" />}
+              {status === "incomplete" && <X className="w-2.5 h-2.5 sm:w-3 sm:h-3 mt-0.5" />}
               {status === "partial" && (
-                <div className="w-1.5 h-1.5 rounded-full bg-yellow-400 mt-0.5" />
+                <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-yellow-400 mt-0.5" />
               )}
             </div>
           );
@@ -131,22 +151,22 @@ const ProgressCalendar = () => {
       </div>
 
       {/* Legend */}
-      <div className="mt-4 flex flex-wrap gap-3 text-xs">
+      <div className="mt-3 sm:mt-4 flex flex-wrap gap-2 sm:gap-3 text-[10px] sm:text-xs">
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded bg-green-500/20 flex items-center justify-center">
-            <Check className="w-2 h-2 text-green-400" />
+          <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded bg-green-500/20 flex items-center justify-center">
+            <Check className="w-1.5 h-1.5 sm:w-2 sm:h-2 text-green-400" />
           </div>
           <span className="text-muted-foreground">Done</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded bg-yellow-500/20 flex items-center justify-center">
-            <div className="w-1 h-1 rounded-full bg-yellow-400" />
+          <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded bg-yellow-500/20 flex items-center justify-center">
+            <div className="w-0.5 h-0.5 sm:w-1 sm:h-1 rounded-full bg-yellow-400" />
           </div>
           <span className="text-muted-foreground">Partial</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded bg-red-500/20 flex items-center justify-center">
-            <X className="w-2 h-2 text-red-400" />
+          <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded bg-red-500/20 flex items-center justify-center">
+            <X className="w-1.5 h-1.5 sm:w-2 sm:h-2 text-red-400" />
           </div>
           <span className="text-muted-foreground">Missed</span>
         </div>
