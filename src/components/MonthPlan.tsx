@@ -16,8 +16,8 @@ interface MonthPlanProps {
   days: DayPlan[];
 }
 
-// Helper to convert "Jan 30" to "2026-01-30"
-const dateStringToISO = (dateStr: string): string | null => {
+// Helper to convert "Jan 30" to "YYYY-01-30"
+const dateStringToISO = (dateStr: string, year: number): string | null => {
   const months: Record<string, string> = {
     'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04',
     'May': '05', 'Jun': '06', 'Jul': '07', 'Aug': '08',
@@ -28,7 +28,7 @@ const dateStringToISO = (dateStr: string): string | null => {
     const month = months[parts[0]];
     const day = parts[1].padStart(2, '0');
     if (month && day) {
-      return `2026-${month}-${day}`;
+      return `${year}-${month}-${day}`;
     }
   }
   return null;
@@ -41,6 +41,8 @@ const MonthPlan = ({ month, focus, days }: MonthPlanProps) => {
   const [dayPlans, setDayPlans] = useLocalStorage<DayPlan[]>(storageKey, days);
   const [showCelebration, setShowCelebration] = useState(false);
   const celebrationShownRef = useRef<Set<string>>(new Set());
+
+  const planYear = Number(month.match(/\d{4}/)?.[0] ?? new Date().getFullYear());
 
   // Sync progress to calendar and graph
   const syncProgressToStorage = useCallback((updatedDays: DayPlan[]) => {
@@ -56,7 +58,7 @@ const MonthPlan = ({ month, focus, days }: MonthPlanProps) => {
       dailyProgressRaw ? JSON.parse(dailyProgressRaw) : [];
 
     updatedDays.forEach(day => {
-      const isoDate = dateStringToISO(day.date);
+      const isoDate = dateStringToISO(day.date, planYear);
       if (!isoDate) return; // Skip date ranges like "Feb 15-23"
       
       const completedCount = day.tasks.filter(t => t.completed).length;
@@ -84,7 +86,12 @@ const MonthPlan = ({ month, focus, days }: MonthPlanProps) => {
     
     // Dispatch storage event for other components to update immediately
     window.dispatchEvent(new Event('storage'));
-  }, []);
+  }, [planYear]);
+
+  // Ensure calendar + graph are correct even after refresh (not only after toggles)
+  useEffect(() => {
+    syncProgressToStorage(dayPlans);
+  }, [dayPlans, syncProgressToStorage]);
 
   const triggerCelebration = useCallback((dayDate: string) => {
     if (celebrationShownRef.current.has(dayDate)) return;
