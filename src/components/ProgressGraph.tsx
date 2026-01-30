@@ -2,6 +2,8 @@ import { useMemo, useState, useEffect, useCallback } from "react";
 import { TrendingUp } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
+const PROGRESS_UPDATED_EVENT = "neet-progress-updated";
+
 interface DailyProgress {
   date: string;
   tasksCompleted: number;
@@ -26,7 +28,11 @@ const ProgressGraph = () => {
     };
     
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    window.addEventListener(PROGRESS_UPDATED_EVENT, handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener(PROGRESS_UPDATED_EVENT, handleStorageChange);
+    };
   }, [loadProgressData]);
 
   const chartData = useMemo(() => {
