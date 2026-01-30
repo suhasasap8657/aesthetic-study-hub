@@ -1,75 +1,8 @@
-// January 2026 Data (Jan 24-31) - Starting from Jan 24
+// January 2026 Data (Jan 30-31) - Starting from Jan 30
 export const januaryPlan = {
   month: "January 2026",
-  focus: "Organic + Bio Class 11 Start (Jan 24-31)",
+  focus: "Organic + Biology start (Jan 30 onwards)",
   days: [
-    {
-      date: "Jan 24",
-      day: "Friday",
-      tasks: [
-        { id: "jan24-1", label: "Main: GOC Day 1 (4 hrs watch/notes)", completed: false },
-        { id: "jan24-2", label: "Practice: 60 QS GOC (35 NEET 2015-2025, 15 JEE 2023-2025, 10 Exemplar)", completed: false },
-        { id: "jan24-3", label: "Parallel: Bio - Living World (Class 11) + 90 QS", completed: false },
-        { id: "jan24-4", label: "Doubts: Clear", completed: false },
-        { id: "jan24-5", label: "Main 2: Extra Bio QS for 90 total", completed: false },
-      ],
-    },
-    {
-      date: "Jan 25",
-      day: "Saturday",
-      tasks: [
-        { id: "jan25-1", label: "Main: GOC Day 2 (4 hrs)", completed: false },
-        { id: "jan25-2", label: "Practice: 65 QS GOC (40 NEET, 15 JEE, 10 Exemplar)", completed: false },
-        { id: "jan25-3", label: "Parallel: Bio - Biological Classification (Class 11) + 90 QS", completed: false },
-        { id: "jan25-4", label: "Doubts: Telegram", completed: false },
-        { id: "jan25-5", label: "Main 2: Extra Bio QS", completed: false },
-      ],
-    },
-    {
-      date: "Jan 26",
-      day: "Sunday",
-      tasks: [
-        { id: "jan26-1", label: "Main: Isomerism Day 1 (4 hrs)", completed: false },
-        { id: "jan26-2", label: "Practice: 60 QS Isomerism (35 NEET, 15 JEE, 10 Exemplar)", completed: false },
-        { id: "jan26-3", label: "Parallel: Bio - Plant Kingdom (Class 11) + 90 QS", completed: false },
-        { id: "jan26-4", label: "Doubts: NCERT", completed: false },
-        { id: "jan26-5", label: "Main 2: Extra Bio QS", completed: false },
-        { id: "jan26-6", label: "Weekly Sunday: Revision of entire week + NCERT", completed: false },
-      ],
-    },
-    {
-      date: "Jan 27",
-      day: "Monday",
-      tasks: [
-        { id: "jan27-1", label: "Main: Isomerism Day 2 (4 hrs)", completed: false },
-        { id: "jan27-2", label: "Practice: 65 QS Isomerism (40 NEET, 15 JEE, 10 Exemplar)", completed: false },
-        { id: "jan27-3", label: "Parallel: Bio - Animal Kingdom (Class 11) + 90 QS", completed: false },
-        { id: "jan27-4", label: "Doubts: Alt clip", completed: false },
-        { id: "jan27-5", label: "Main 2: Extra Bio QS", completed: false },
-      ],
-    },
-    {
-      date: "Jan 28",
-      day: "Tuesday",
-      tasks: [
-        { id: "jan28-1", label: "Main: Reaction Mechanism Day 1 (4 hrs)", completed: false },
-        { id: "jan28-2", label: "Practice: 60 QS Reaction Mech (35 NEET, 15 JEE, 10 Exemplar)", completed: false },
-        { id: "jan28-3", label: "Parallel: Bio - Morphology of Flowering Plants (Class 11) + 90 QS", completed: false },
-        { id: "jan28-4", label: "Doubts: Clear", completed: false },
-        { id: "jan28-5", label: "Main 2: Extra Bio QS", completed: false },
-      ],
-    },
-    {
-      date: "Jan 29",
-      day: "Wednesday",
-      tasks: [
-        { id: "jan29-1", label: "Main: Reaction Mechanism Day 2 (4 hrs)", completed: false },
-        { id: "jan29-2", label: "Practice: 65 QS Reaction Mech (40 NEET, 15 JEE, 10 Exemplar)", completed: false },
-        { id: "jan29-3", label: "Parallel: Bio - Structural Organisation in Animals (Class 11) + 90 QS", completed: false },
-        { id: "jan29-4", label: "Doubts: Telegram", completed: false },
-        { id: "jan29-5", label: "Main 2: Extra Bio QS", completed: false },
-      ],
-    },
     {
       date: "Jan 30",
       day: "Thursday",
@@ -87,7 +20,7 @@ export const januaryPlan = {
       tasks: [
         { id: "jan31-1", label: "Main: Haloalkane & Haloarene Day 1 (4 hrs)", completed: false },
         { id: "jan31-2", label: "Practice: 60 QS Haloalkanes (35 NEET, 15 JEE, 10 Exemplar)", completed: false },
-        { id: "jan31-3", label: "Parallel: Bio - Cell Cycle & Cell Division (Class 11) + 90 QS", completed: false },
+        { id: "jan31-3", label: "Main: Biology starts - Cell Cycle & Cell Division (Class 11) + 90 QS", completed: false },
         { id: "jan31-4", label: "Doubts: NCERT", completed: false },
         { id: "jan31-5", label: "Main 2: Extra Bio QS", completed: false },
       ],

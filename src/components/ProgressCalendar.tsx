@@ -2,6 +2,8 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import { CalendarDays, Check, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+const PROGRESS_UPDATED_EVENT = "neet-progress-updated";
+
 interface DailyProgress {
   date: string;
   tasksCompleted: number;
@@ -28,7 +30,11 @@ const ProgressCalendar = () => {
     };
     
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    window.addEventListener(PROGRESS_UPDATED_EVENT, handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener(PROGRESS_UPDATED_EVENT, handleStorageChange);
+    };
   }, [loadProgressData]);
 
   const monthDays = useMemo(() => {

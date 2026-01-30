@@ -4,6 +4,8 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 import confetti from "canvas-confetti";
 import { PartyPopper } from "lucide-react";
 
+const PROGRESS_UPDATED_EVENT = "neet-progress-updated";
+
 interface DayPlan {
   date: string;
   day: string;
@@ -43,6 +45,35 @@ const MonthPlan = ({ month, focus, days }: MonthPlanProps) => {
   const celebrationShownRef = useRef<Set<string>>(new Set());
 
   const planYear = Number(month.match(/\d{4}/)?.[0] ?? new Date().getFullYear());
+
+  const cleanupProgressForDates = useCallback((isoDatesToRemove: string[]) => {
+    if (isoDatesToRemove.length === 0) return;
+
+    const calendarProgressKey = "neet-calendar-progress";
+    const dailyProgressKey = "neet-daily-progress";
+
+    const calendarProgressRaw = localStorage.getItem(calendarProgressKey);
+    const dailyProgressRaw = localStorage.getItem(dailyProgressKey);
+
+    const calendarProgress: { date: string; tasksCompleted: number; totalTasks: number }[] =
+      calendarProgressRaw ? JSON.parse(calendarProgressRaw) : [];
+    const dailyProgress: { date: string; tasksCompleted: number }[] =
+      dailyProgressRaw ? JSON.parse(dailyProgressRaw) : [];
+
+    const removeSet = new Set(isoDatesToRemove);
+
+    localStorage.setItem(
+      calendarProgressKey,
+      JSON.stringify(calendarProgress.filter((p) => !removeSet.has(p.date)))
+    );
+    localStorage.setItem(
+      dailyProgressKey,
+      JSON.stringify(dailyProgress.filter((p) => !removeSet.has(p.date)))
+    );
+
+    window.dispatchEvent(new Event(PROGRESS_UPDATED_EVENT));
+    window.dispatchEvent(new Event("storage"));
+  }, []);
 
   // Sync progress to calendar and graph
   const syncProgressToStorage = useCallback((updatedDays: DayPlan[]) => {
@@ -85,6 +116,7 @@ const MonthPlan = ({ month, focus, days }: MonthPlanProps) => {
     localStorage.setItem(dailyProgressKey, JSON.stringify(dailyProgress));
     
     // Dispatch storage event for other components to update immediately
+    window.dispatchEvent(new Event(PROGRESS_UPDATED_EVENT));
     window.dispatchEvent(new Event('storage'));
   }, [planYear]);
 
@@ -132,32 +164,43 @@ const MonthPlan = ({ month, focus, days }: MonthPlanProps) => {
     }, 5000);
   }, []);
 
-  // Update localStorage if initial days data structure changes (new tasks added)
+  // Update localStorage if plan changes (tasks added/removed, or days removed)
   useEffect(() => {
-    // Check if any new tasks were added to the plan
-    const storedTaskIds = new Set(dayPlans.flatMap(d => d.tasks.map(t => t.id)));
-    const newTaskIds = days.flatMap(d => d.tasks.map(t => t.id));
-    const hasNewTasks = newTaskIds.some(id => !storedTaskIds.has(id));
+    const storedTaskIds = new Set(dayPlans.flatMap((d) => d.tasks.map((t) => t.id)));
+    const newTaskIds = days.flatMap((d) => d.tasks.map((t) => t.id));
+    const hasNewTasks = newTaskIds.some((id) => !storedTaskIds.has(id));
+
+    const storedDates = new Set(dayPlans.map((d) => d.date));
+    const newDates = new Set(days.map((d) => d.date));
+    const removedDates = [...storedDates].filter((d) => !newDates.has(d));
+    const hasRemovedDays = removedDates.length > 0;
     
-    if (hasNewTasks) {
-      // Merge: keep completed status from stored, add new tasks from days
-      const merged = days.map(day => {
-        const storedDay = dayPlans.find(d => d.date === day.date);
+    if (hasNewTasks || hasRemovedDays) {
+      // Merge: keep completed status from stored, only keep days that still exist
+      const merged = days.map((day) => {
+        const storedDay = dayPlans.find((d) => d.date === day.date);
         if (storedDay) {
           return {
             ...day,
-            tasks: day.tasks.map(task => {
-              const storedTask = storedDay.tasks.find(t => t.id === task.id);
+            tasks: day.tasks.map((task) => {
+              const storedTask = storedDay.tasks.find((t) => t.id === task.id);
               return storedTask ? { ...task, completed: storedTask.completed } : task;
             })
           };
         }
         return day;
       });
+
+      // Remove stale progress entries for days removed from the plan (e.g., Jan 24-29)
+      const removedIsoDates = removedDates
+        .map((d) => dateStringToISO(d, planYear))
+        .filter((d): d is string => Boolean(d));
+
       setDayPlans(merged);
+      cleanupProgressForDates(removedIsoDates);
       syncProgressToStorage(merged);
     }
-  }, [days, syncProgressToStorage]);
+  }, [days, planYear, cleanupProgressForDates, syncProgressToStorage]);
 
   const toggleTask = (dayIndex: number, taskId: string) => {
     setDayPlans(prev => {
