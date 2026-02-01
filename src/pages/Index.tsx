@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { Calendar, BookOpen, Target, ClipboardList, Sparkles } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Calendar, BookOpen, Target, ClipboardList, Sparkles, Zap } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import TabButton from "@/components/TabButton";
 import DailyRoutineTable from "@/components/DailyRoutineTable";
 import Guidelines from "@/components/Guidelines";
@@ -15,6 +17,7 @@ import backgroundImage from "@/assets/background.jpg";
 type Tab = "home" | "guidelines" | "routine" | "january" | "february" | "march";
 
 const Index = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>("home");
 
   const tabs = [
@@ -31,6 +34,28 @@ const Index = () => {
       case "home":
         return (
           <div className="space-y-6 animate-fade-in">
+            {/* Study Crusher CTA */}
+            <div className="bg-gradient-to-r from-pink-500/20 via-purple-500/20 to-orange-500/20 backdrop-blur-xl rounded-2xl p-6 border border-pink-500/30">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-r from-pink-500 to-purple-500 flex items-center justify-center shrink-0">
+                    <Zap className="w-7 h-7 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-lg text-white">Study Crusher Mode</h3>
+                    <p className="text-sm text-zinc-400">Strict focus session with anti-cheat & Firebase tracking</p>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => navigate('/crusher')}
+                  className="bg-gradient-to-r from-pink-500 to-purple-500 hover:opacity-90 text-white font-bold whitespace-nowrap"
+                >
+                  <Zap className="w-4 h-4 mr-2" />
+                  Launch Crusher
+                </Button>
+              </div>
+            </div>
+
             <QuoteCard />
 
             <div className="grid md:grid-cols-2 gap-4">
