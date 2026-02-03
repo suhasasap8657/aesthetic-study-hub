@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, Area, AreaChart } from 'recharts';
-import { getLast30DaysStats } from '@/lib/firebase';
+import { getLast30DaysStats, GraphData } from '@/lib/firebase';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface DayData {
@@ -20,11 +20,11 @@ const StatsGraph = () => {
       try {
         const sessions = await getLast30DaysStats();
         
-        const chartData: DayData[] = sessions.map(session => ({
+        const chartData: DayData[] = sessions.map((session: GraphData) => ({
           date: session.date,
           displayDate: new Date(session.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-          completed: session.completed ? 100 : 0,
-          overtime: session.totalOvertime || 0,
+          completed: session.completionPercentage || 0,
+          overtime: session.overtimeMinutes || 0,
           distractions: session.distractionCount || 0
         }));
 
@@ -41,7 +41,7 @@ const StatsGraph = () => {
 
   if (loading) {
     return (
-      <div className="bg-zinc-900/50 backdrop-blur-xl rounded-2xl p-5 border border-zinc-800 h-80 flex items-center justify-center">
+      <div className="bg-black rounded-2xl p-5 border border-zinc-800 h-80 flex items-center justify-center">
         <div className="text-zinc-500">Loading stats...</div>
       </div>
     );
@@ -49,7 +49,7 @@ const StatsGraph = () => {
 
   if (data.length === 0) {
     return (
-      <div className="bg-zinc-900/50 backdrop-blur-xl rounded-2xl p-5 border border-zinc-800 h-80 flex items-center justify-center">
+      <div className="bg-black rounded-2xl p-5 border border-zinc-800 h-80 flex items-center justify-center">
         <div className="text-center text-zinc-500">
           <p className="text-lg mb-2">No data yet</p>
           <p className="text-sm">Complete study sessions to see your progress</p>
@@ -59,14 +59,14 @@ const StatsGraph = () => {
   }
 
   return (
-    <div className="bg-zinc-900/50 backdrop-blur-xl rounded-2xl p-5 border border-zinc-800">
-      <h3 className="font-semibold text-lg mb-4">Progress Overview (Last 30 Days)</h3>
+    <div className="bg-black rounded-2xl p-5 border border-zinc-800">
+      <h3 className="font-semibold text-lg mb-4 text-white">Progress Overview (Last 30 Days)</h3>
       
       <Tabs defaultValue="completion" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-4 bg-zinc-800/50">
-          <TabsTrigger value="completion">Completion</TabsTrigger>
-          <TabsTrigger value="overtime">Overtime</TabsTrigger>
-          <TabsTrigger value="distractions">Distractions</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3 mb-4 bg-zinc-900">
+          <TabsTrigger value="completion" className="data-[state=active]:bg-green-500/20 data-[state=active]:text-green-400">Completion</TabsTrigger>
+          <TabsTrigger value="overtime" className="data-[state=active]:bg-orange-500/20 data-[state=active]:text-orange-400">Overtime</TabsTrigger>
+          <TabsTrigger value="distractions" className="data-[state=active]:bg-red-500/20 data-[state=active]:text-red-400">Distractions</TabsTrigger>
         </TabsList>
 
         <TabsContent value="completion" className="h-64">
@@ -90,8 +90,8 @@ const StatsGraph = () => {
               />
               <Tooltip
                 contentStyle={{ 
-                  backgroundColor: '#18181b', 
-                  border: '1px solid #3f3f46',
+                  backgroundColor: '#000', 
+                  border: '1px solid #27272a',
                   borderRadius: '8px'
                 }}
                 labelStyle={{ color: '#a1a1aa' }}
@@ -122,8 +122,8 @@ const StatsGraph = () => {
               />
               <Tooltip
                 contentStyle={{ 
-                  backgroundColor: '#18181b', 
-                  border: '1px solid #3f3f46',
+                  backgroundColor: '#000', 
+                  border: '1px solid #27272a',
                   borderRadius: '8px'
                 }}
                 labelStyle={{ color: '#a1a1aa' }}
@@ -151,8 +151,8 @@ const StatsGraph = () => {
               />
               <Tooltip
                 contentStyle={{ 
-                  backgroundColor: '#18181b', 
-                  border: '1px solid #3f3f46',
+                  backgroundColor: '#000', 
+                  border: '1px solid #27272a',
                   borderRadius: '8px'
                 }}
                 labelStyle={{ color: '#a1a1aa' }}

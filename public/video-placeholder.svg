@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="225" viewBox="0 0 400 225">
+  <rect width="400" height="225" fill="#000000"/>
+  <rect x="175" y="85" width="50" height="50" rx="8" fill="#27272a"/>
+  <polygon points="195,100 195,125 215,112.5" fill="#ffffff"/>
+  <text x="200" y="165" text-anchor="middle" fill="#71717a" font-family="Arial, sans-serif" font-size="14">Play Video</text>
+  <text x="200" y="185" text-anchor="middle" fill="#3f3f46" font-family="Arial, sans-serif" font-size="10">Click to start</text>
+</svg>

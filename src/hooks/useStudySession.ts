@@ -6,20 +6,24 @@ import {
   saveDailySession, 
   getUserStats, 
   updateUserStats,
-  UserStats 
+  UserStats,
+  VideoProgress
 } from '@/lib/firebase';
-import { StudyTarget, DEFAULT_TARGETS, SessionState } from '@/types/studyCrusher';
+import { StudyTarget, VideoSlot, DEFAULT_TARGETS, DEFAULT_VIDEOS, SessionState } from '@/types/studyCrusher';
 
 export const useStudySession = () => {
   const [session, setSession] = useState<SessionState>({
     isActive: false,
     startTime: null,
-    videoCompleted: false,
+    videosCompleted: 0,
+    currentVideoIndex: -1,
+    videos: DEFAULT_VIDEOS.map((v, i) => ({ ...v, status: i === 0 ? 'locked' : 'locked' })),
     currentTargetIndex: -1,
     targets: DEFAULT_TARGETS,
     distractionCount: 0,
     focusCheckIns: [],
-    isLocked: false
+    isLocked: false,
+    aiTimeUsed: 0
   });
   
   const [stats, setStats] = useState<UserStats | null>(null);
@@ -43,14 +47,22 @@ export const useStudySession = () => {
           setSession(prev => ({
             ...prev,
             isLocked: false,
+            videos: DEFAULT_VIDEOS.map((v, i) => ({ ...v, status: i === 0 ? 'locked' : 'locked' })),
             targets: DEFAULT_TARGETS.map(t => ({ ...t, status: 'locked' as const }))
           }));
         } else if (existingSession.completed) {
           // Session already completed today
+          const videosFromSession = existingSession.videosWatched?.map((v, i) => ({
+            ...DEFAULT_VIDEOS[i],
+            ...v,
+            status: 'completed' as const
+          })) || DEFAULT_VIDEOS;
+          
           setSession(prev => ({
             ...prev,
             isActive: false,
-            videoCompleted: true,
+            videosCompleted: 3,
+            videos: videosFromSession,
             targets: existingSession.targets as StudyTarget[]
           }));
         } else if (existingSession.sessionLocked) {
@@ -74,17 +86,26 @@ export const useStudySession = () => {
 
   const startSession = useCallback(async () => {
     const today = getTodayKey();
+    const initialVideos: VideoProgress[] = DEFAULT_VIDEOS.map(v => ({
+      id: v.id,
+      title: v.title,
+      completed: false,
+      watchedDuration: 0,
+      totalDuration: 0
+    }));
+    
     const newSession: DailySession = {
       date: today,
       completed: false,
-      videoWatched: false,
+      videosWatched: initialVideos,
       targets: session.targets.map(t => ({
         ...t,
         status: 'locked' as const
       })),
       totalOvertime: 0,
       distractionCount: 0,
-      sessionStarted: new Date().toISOString()
+      sessionStarted: new Date().toISOString(),
+      aiTimeUsed: 0
     };
     
     await saveDailySession(newSession);
@@ -94,29 +115,57 @@ export const useStudySession = () => {
       ...prev,
       isActive: true,
       startTime: new Date().toISOString(),
-      targets: prev.targets.map((t, i) => ({
+      videos: prev.videos.map((v, i) => ({
+        ...v,
+        status: i === 0 ? 'ready' : 'locked'
+      })),
+      targets: prev.targets.map(t => ({
         ...t,
-        status: i === 0 ? 'locked' : 'locked' // First unlocks after video
+        status: 'locked'
       }))
     }));
   }, [session.targets]);
 
-  const completeVideo = useCallback(async () => {
+  const completeVideo = useCallback(async (videoIndex: number) => {
+    const videosCompleted = videoIndex + 1;
+    const allVideosCompleted = videosCompleted >= 3;
+    
     setSession(prev => ({
       ...prev,
-      videoCompleted: true,
-      targets: prev.targets.map((t, i) => ({
-        ...t,
-        status: i === 0 ? 'ready' : 'locked'
-      }))
+      videosCompleted,
+      currentVideoIndex: -1,
+      videos: prev.videos.map((v, i) => {
+        if (i === videoIndex) {
+          return { ...v, status: 'completed' as const };
+        }
+        if (i === videoIndex + 1 && i < 3) {
+          return { ...v, status: 'ready' as const };
+        }
+        return v;
+      }),
+      targets: allVideosCompleted 
+        ? prev.targets.map((t, i) => ({
+            ...t,
+            status: i === 0 ? 'ready' : 'locked'
+          }))
+        : prev.targets
     }));
     
     if (dailySession) {
+      const updatedVideos = dailySession.videosWatched?.map((v, i) => {
+        if (i === videoIndex) {
+          return { ...v, completed: true, completedAt: new Date().toISOString() };
+        }
+        return v;
+      }) || [];
+      
       await saveDailySession({
         ...dailySession,
-        videoWatched: true
+        videosWatched: updatedVideos
       });
     }
+    
+    return allVideosCompleted;
   }, [dailySession]);
 
   const startTarget = useCallback((targetIndex: number) => {
@@ -168,7 +217,6 @@ export const useStudySession = () => {
       });
 
       if (allDone) {
-        // Update streak
         await updateStreak();
       }
     }
@@ -237,13 +285,27 @@ export const useStudySession = () => {
     await saveDailySession({
       date: today,
       completed: false,
-      videoWatched: false,
+      videosWatched: [],
       targets: [],
       totalOvertime: 0,
       distractionCount: 0,
       sessionLocked: true
     });
   }, []);
+
+  const updateAITime = useCallback(async (minutes: number) => {
+    setSession(prev => ({
+      ...prev,
+      aiTimeUsed: prev.aiTimeUsed + minutes
+    }));
+    
+    if (dailySession) {
+      await saveDailySession({
+        ...dailySession,
+        aiTimeUsed: (dailySession.aiTimeUsed || 0) + minutes
+      });
+    }
+  }, [dailySession]);
 
   return {
     session,
@@ -256,6 +318,7 @@ export const useStudySession = () => {
     completeTarget,
     addDistraction,
     lockSession,
+    updateAITime,
     refreshSession: loadSession
   };
 };

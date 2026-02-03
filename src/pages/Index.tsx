@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Calendar, BookOpen, Target, ClipboardList, Sparkles, Zap } from "lucide-react";
+import { Calendar, BookOpen, Target, Sparkles, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import TabButton from "@/components/TabButton";
-import DailyRoutineTable from "@/components/DailyRoutineTable";
 import Guidelines from "@/components/Guidelines";
 import QuoteCard from "@/components/QuoteCard";
 import MonthPlan from "@/components/MonthPlan";
@@ -14,7 +13,7 @@ import ProgressCalendar from "@/components/ProgressCalendar";
 import { januaryPlan, februaryPlan, marchPlan } from "@/data/monthlyPlans";
 import backgroundImage from "@/assets/background.jpg";
 
-type Tab = "home" | "guidelines" | "routine" | "january" | "february" | "march";
+type Tab = "home" | "guidelines" | "january" | "february" | "march";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -23,7 +22,6 @@ const Index = () => {
   const tabs = [
     { id: "home" as Tab, label: "Home", icon: <Sparkles className="w-4 h-4" /> },
     { id: "guidelines" as Tab, label: "Guidelines", icon: <Target className="w-4 h-4" /> },
-    { id: "routine" as Tab, label: "Daily Routine", icon: <ClipboardList className="w-4 h-4" /> },
     { id: "january" as Tab, label: "January", icon: <Calendar className="w-4 h-4" /> },
     { id: "february" as Tab, label: "February", icon: <Calendar className="w-4 h-4" /> },
     { id: "march" as Tab, label: "March", icon: <Calendar className="w-4 h-4" /> },
@@ -94,7 +92,6 @@ const Index = () => {
           </div>
         );
       case "guidelines": return <Guidelines />;
-      case "routine": return <DailyRoutineTable />;
       case "january": return <MonthPlan {...januaryPlan} />;
       case "february": return <MonthPlan {...februaryPlan} />;
       case "march": return <MonthPlan {...marchPlan} />;

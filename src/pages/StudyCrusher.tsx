@@ -1,19 +1,18 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Target, Play, Lock, Image, MessageSquare, BarChart3 } from 'lucide-react';
+import { Target, Play, Lock, BarChart3, Calendar, Image, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useStudySession } from '@/hooks/useStudySession';
 import CommitmentCeremony from '@/components/crusher/CommitmentCeremony';
-import CustomVideoPlayer from '@/components/crusher/CustomVideoPlayer';
+import VideoCard from '@/components/crusher/VideoCard';
 import TargetCard from '@/components/crusher/TargetCard';
 import FocusMode from '@/components/crusher/FocusMode';
 import RewardScreen from '@/components/crusher/RewardScreen';
 import CrusherCalendar from '@/components/crusher/CrusherCalendar';
 import StatsGraph from '@/components/crusher/StatsGraph';
 import StreakCounter from '@/components/crusher/StreakCounter';
-
-// Placeholder video URL - can be changed
-const DEFAULT_VIDEO_URL = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+import AIDoubtSolver from '@/components/crusher/AIDoubtSolver';
+import PINModal from '@/components/crusher/PINModal';
 
 // Goal image and message - editable
 const GOAL_IMAGE = '/placeholder.svg';
@@ -31,7 +30,8 @@ const StudyCrusher = () => {
     startTarget,
     completeTarget,
     addDistraction,
-    lockSession
+    lockSession,
+    updateAITime
   } = useStudySession();
 
   const [showCeremony, setShowCeremony] = useState(false);
@@ -40,6 +40,8 @@ const StudyCrusher = () => {
   const [showReward, setShowReward] = useState(false);
   const [showWeeklyOverview, setShowWeeklyOverview] = useState(false);
   const [distractionWarning, setDistractionWarning] = useState('');
+  const [pinVerified, setPinVerified] = useState(false);
+  const [showPINModal, setShowPINModal] = useState(false);
 
   const today = new Date();
   const dateString = today.toLocaleDateString('en-US', {
@@ -52,7 +54,6 @@ const StudyCrusher = () => {
   // Check for incomplete previous session
   useEffect(() => {
     if (!loading && dailySession?.sessionStarted && !dailySession?.completed) {
-      // Previous session was incomplete
       setDistractionWarning('Previous session incomplete — starting over');
     }
   }, [loading, dailySession]);
@@ -70,13 +71,20 @@ const StudyCrusher = () => {
     }
   }, [session.isActive]);
 
+  const handlePINSuccess = () => {
+    setPinVerified(true);
+    setShowPINModal(false);
+    setShowCeremony(true);
+  };
+
   const handleStartSession = async () => {
     await startSession();
     setShowCeremony(false);
   };
 
-  const handleVideoComplete = async () => {
-    await completeVideo();
+  const handleVideoComplete = async (videoIndex: number) => {
+    const allDone = await completeVideo(videoIndex);
+    // After completing a video, check if all videos are done
   };
 
   const handleStartTarget = (index: number) => {
@@ -112,24 +120,30 @@ const StudyCrusher = () => {
   };
 
   // Calculate overall progress
+  const completedVideos = session.videos.filter(v => v.status === 'completed').length;
   const completedTargets = session.targets.filter(t => t.status === 'done').length;
-  const totalTargets = session.targets.length;
-  const progressPercentage = session.videoCompleted 
-    ? ((completedTargets + 1) / (totalTargets + 1)) * 100 
-    : 0;
+  const totalItems = session.videos.length + session.targets.length;
+  const progressPercentage = ((completedVideos + completedTargets) / totalItems) * 100;
+
+  const allVideosCompleted = session.videosCompleted >= 3;
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <div className="text-zinc-400 text-lg">Loading...</div>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-zinc-400 text-lg animate-pulse">Loading...</div>
       </div>
     );
+  }
+
+  // PIN Modal
+  if (showPINModal) {
+    return <PINModal onSuccess={handlePINSuccess} onLock={handleLock} />;
   }
 
   // Show lock screen
   if (session.isLocked) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-black flex items-center justify-center p-4">
         <div className="max-w-md text-center">
           <div className="w-20 h-20 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-6">
             <Lock className="w-10 h-10 text-red-400" />
@@ -139,7 +153,7 @@ const StudyCrusher = () => {
           <Button
             variant="outline"
             onClick={() => navigate('/')}
-            className="border-zinc-700"
+            className="border-zinc-700 text-white hover:bg-zinc-900"
           >
             Back to Planner
           </Button>
@@ -178,14 +192,14 @@ const StudyCrusher = () => {
   // Weekly overview modal
   if (showWeeklyOverview) {
     return (
-      <div className="min-h-screen bg-zinc-950 p-4">
+      <div className="min-h-screen bg-black p-4">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-2xl font-bold text-white">Weekly Overview</h1>
             <Button
               variant="ghost"
               onClick={() => setShowWeeklyOverview(false)}
-              className="text-zinc-400"
+              className="text-zinc-400 hover:text-white"
             >
               Back
             </Button>
@@ -202,12 +216,12 @@ const StudyCrusher = () => {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white">
+    <div className="min-h-screen bg-black text-white">
       {/* Top progress bar */}
       {session.isActive && (
-        <div className="fixed top-0 left-0 right-0 h-1 bg-zinc-800 z-50">
+        <div className="fixed top-0 left-0 right-0 h-1.5 bg-zinc-900 z-50">
           <div
-            className="h-full bg-gradient-to-r from-pink-500 to-purple-500 transition-all duration-500"
+            className="h-full bg-gradient-to-r from-green-500 to-emerald-500 transition-all duration-500"
             style={{ width: `${progressPercentage}%` }}
           />
         </div>
@@ -220,25 +234,25 @@ const StudyCrusher = () => {
         </div>
       )}
 
-      <div className="max-w-2xl mx-auto p-4 pb-20">
+      <div className="max-w-3xl mx-auto p-4 pb-24">
         {/* Header with date */}
         <header className="text-center py-8">
-          <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-pink-400 via-purple-400 to-orange-400 bg-clip-text text-transparent">
+          <h1 className="text-3xl md:text-5xl font-bold bg-gradient-to-r from-pink-400 via-purple-400 to-orange-400 bg-clip-text text-transparent">
             {dateString}
           </h1>
-          <p className="text-zinc-500 mt-2">Study Crusher Mode</p>
+          <p className="text-zinc-500 mt-2 text-lg">Study Crusher Mode</p>
         </header>
 
         {/* Goal section */}
         {!session.isActive && (
           <div className="mb-8">
-            <div className="bg-gradient-to-r from-pink-500/10 to-purple-500/10 backdrop-blur-xl rounded-2xl p-6 border border-pink-500/20">
+            <div className="bg-black rounded-2xl p-6 border border-pink-500/30">
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 rounded-xl bg-gradient-to-r from-pink-500 to-purple-500 flex items-center justify-center shrink-0">
-                  <Target className="w-8 h-8 text-white" />
+                  <Image className="w-8 h-8 text-white" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg text-white">{GOAL_MESSAGE}</h3>
+                  <h3 className="font-bold text-xl text-white">{GOAL_MESSAGE}</h3>
                   <p className="text-sm text-zinc-400 mt-1">Focus. Execute. Repeat.</p>
                 </div>
               </div>
@@ -264,8 +278,8 @@ const StudyCrusher = () => {
         {!session.isActive && !showCeremony && (
           <div className="text-center mb-8">
             <Button
-              onClick={() => setShowCeremony(true)}
-              className="bg-gradient-to-r from-green-500 to-emerald-500 hover:opacity-90 text-lg px-8 py-6"
+              onClick={() => setShowPINModal(true)}
+              className="bg-gradient-to-r from-green-500 to-emerald-500 hover:opacity-90 text-lg px-8 py-6 h-auto"
             >
               <Play className="w-5 h-5 mr-2" />
               Start Today's Session
@@ -275,7 +289,7 @@ const StudyCrusher = () => {
               <Button
                 variant="ghost"
                 onClick={() => setShowWeeklyOverview(true)}
-                className="text-zinc-400"
+                className="text-zinc-400 hover:text-white"
               >
                 <BarChart3 className="w-4 h-4 mr-2" />
                 Weekly Overview
@@ -285,36 +299,49 @@ const StudyCrusher = () => {
         )}
 
         {showCeremony && !session.isActive && (
-          <CommitmentCeremony onStart={handleStartSession} onLock={handleLock} />
+          <CommitmentCeremony 
+            onStart={handleStartSession} 
+            onLock={handleLock}
+            pinVerified={pinVerified}
+          />
         )}
 
-        {/* Active session: Video + Targets */}
+        {/* Active session: Videos + Targets */}
         {session.isActive && (
           <div className="space-y-6">
-            {/* Video section */}
-            {!session.videoCompleted && (
-              <div>
-                <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
-                  <Play className="w-5 h-5 text-pink-400" />
-                  Today's Lecture
-                </h3>
-                <CustomVideoPlayer
-                  videoUrl={DEFAULT_VIDEO_URL}
-                  onComplete={handleVideoComplete}
-                />
-                <p className="text-center text-sm text-zinc-500 mt-3">
-                  Complete the video to unlock targets
-                </p>
+            {/* Videos section */}
+            <div>
+              <h3 className="font-semibold text-xl mb-4 flex items-center gap-2">
+                <Play className="w-5 h-5 text-pink-400" />
+                Today's Lectures
+                <span className="text-sm text-zinc-500 font-normal">
+                  ({completedVideos}/3 done)
+                </span>
+              </h3>
+              <div className="space-y-4">
+                {session.videos.map((video, index) => (
+                  <VideoCard
+                    key={video.id}
+                    video={video}
+                    index={index}
+                    onComplete={() => handleVideoComplete(index)}
+                  />
+                ))}
               </div>
-            )}
+              {!allVideosCompleted && (
+                <p className="text-center text-sm text-zinc-500 mt-4">
+                  Complete all 3 videos to unlock targets
+                </p>
+              )}
+            </div>
 
             {/* Targets list */}
             <div>
-              <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+              <h3 className="font-semibold text-xl mb-4 flex items-center gap-2">
                 <Target className="w-5 h-5 text-purple-400" />
                 Today's Targets
                 <span className="text-sm text-zinc-500 font-normal">
-                  ({completedTargets}/{totalTargets} done)
+                  ({completedTargets}/{session.targets.length} done)
                 </span>
               </h3>
               <div className="space-y-3">
@@ -345,6 +372,14 @@ const StudyCrusher = () => {
           </div>
         )}
       </div>
+
+      {/* AI Doubt Solver - Only show after first video */}
+      {session.isActive && completedVideos >= 1 && (
+        <AIDoubtSolver 
+          onTimeUpdate={updateAITime}
+          totalTimeUsed={session.aiTimeUsed}
+        />
+      )}
     </div>
   );
 };

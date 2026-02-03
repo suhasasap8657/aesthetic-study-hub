@@ -3,21 +3,22 @@ import { Lock, Clock, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { getDailyPIN, isWithinTimeWindow } from '@/lib/firebase';
-import { CommitmentItem, DEFAULT_COMMITMENTS } from '@/types/studyCrusher';
+import { getFallbackPIN, isWithinTimeWindow } from '@/lib/firebase';
+import { CommitmentItem, DEFAULT_COMMITMENTS, COMMITMENT_PHRASE } from '@/types/studyCrusher';
 
 interface CommitmentCeremonyProps {
   onStart: () => void;
   onLock: (reason: string) => void;
+  pinVerified?: boolean;
 }
 
-const CommitmentCeremony = ({ onStart, onLock }: CommitmentCeremonyProps) => {
+const CommitmentCeremony = ({ onStart, onLock, pinVerified = false }: CommitmentCeremonyProps) => {
   const [pin, setPin] = useState('');
   const [pinError, setPinError] = useState('');
   const [pinAttempts, setPinAttempts] = useState(0);
   const [commitmentStatement, setCommitmentStatement] = useState('');
   const [commitments, setCommitments] = useState<CommitmentItem[]>(DEFAULT_COMMITMENTS);
-  const [step, setStep] = useState<'pin' | 'commitment'>('pin');
+  const [step, setStep] = useState<'pin' | 'commitment'>(pinVerified ? 'commitment' : 'pin');
 
   const handlePinSubmit = () => {
     // Check time window first
@@ -26,7 +27,7 @@ const CommitmentCeremony = ({ onStart, onLock }: CommitmentCeremonyProps) => {
       return;
     }
 
-    const correctPin = getDailyPIN(new Date());
+    const correctPin = getFallbackPIN(new Date());
     
     if (pin === correctPin) {
       setStep('commitment');
@@ -35,10 +36,10 @@ const CommitmentCeremony = ({ onStart, onLock }: CommitmentCeremonyProps) => {
       const newAttempts = pinAttempts + 1;
       setPinAttempts(newAttempts);
       
-      if (newAttempts >= 3) {
+      if (newAttempts >= 5) {
         onLock('Too many wrong PIN attempts. Ask for tomorrow\'s PIN.');
       } else {
-        setPinError(`Wrong PIN. ${3 - newAttempts} attempts remaining.`);
+        setPinError(`Wrong PIN. ${5 - newAttempts} attempts remaining.`);
       }
     }
   };
@@ -60,13 +61,13 @@ const CommitmentCeremony = ({ onStart, onLock }: CommitmentCeremonyProps) => {
   return (
     <div className="max-w-md mx-auto">
       {step === 'pin' && (
-        <div className="glass-card rounded-2xl p-6 space-y-6">
+        <div className="bg-black rounded-2xl p-6 space-y-6 border border-zinc-800">
           <div className="text-center">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-r from-pink-500 to-purple-500 flex items-center justify-center mx-auto mb-4">
               <Lock className="w-8 h-8 text-white" />
             </div>
-            <h3 className="text-xl font-bold mb-2">Enter Daily PIN</h3>
-            <p className="text-sm text-muted-foreground">
+            <h3 className="text-xl font-bold mb-2 text-white">Enter Daily PIN</h3>
+            <p className="text-sm text-zinc-400">
               Enter today's PIN to start your study session
             </p>
           </div>
@@ -88,7 +89,7 @@ const CommitmentCeremony = ({ onStart, onLock }: CommitmentCeremonyProps) => {
               value={pin}
               onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
               maxLength={4}
-              className="text-center text-2xl tracking-[0.5em] font-mono bg-background/50"
+              className="text-center text-2xl tracking-[0.5em] font-mono bg-zinc-900 border-zinc-700 text-white"
             />
             
             {pinError && (
@@ -107,33 +108,33 @@ const CommitmentCeremony = ({ onStart, onLock }: CommitmentCeremonyProps) => {
             </Button>
           </div>
 
-          <div className="text-center text-xs text-muted-foreground">
-            <p>Hint: PIN changes daily based on the date</p>
+          <div className="text-center text-xs text-zinc-500">
+            <p>Today's PIN is based on date calculation</p>
           </div>
         </div>
       )}
 
       {step === 'commitment' && (
-        <div className="glass-card rounded-2xl p-6 space-y-6">
+        <div className="bg-black rounded-2xl p-6 space-y-6 border border-zinc-800">
           <div className="text-center">
-            <h3 className="text-xl font-bold mb-2">Commitment Ceremony</h3>
-            <p className="text-sm text-muted-foreground">
+            <h3 className="text-xl font-bold mb-2 text-white">Commitment Ceremony</h3>
+            <p className="text-sm text-zinc-400">
               Make your commitment before starting
             </p>
           </div>
 
           <div className="space-y-4">
             <div>
-              <label className="text-sm text-muted-foreground mb-2 block">
+              <label className="text-sm text-zinc-400 mb-2 block">
                 Type your commitment statement:
               </label>
               <Input
-                placeholder="Today I will finish all targets without distractions"
+                placeholder={COMMITMENT_PHRASE}
                 value={commitmentStatement}
                 onChange={(e) => setCommitmentStatement(e.target.value)}
-                className="bg-background/50"
+                className="bg-zinc-900 border-zinc-700 text-white"
               />
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs text-zinc-500 mt-1">
                 Must include "Today I will finish all targets"
               </p>
             </div>
@@ -142,14 +143,14 @@ const CommitmentCeremony = ({ onStart, onLock }: CommitmentCeremonyProps) => {
               {commitments.map((item) => (
                 <label
                   key={item.id}
-                  className="flex items-center gap-3 p-3 rounded-xl bg-background/30 hover:bg-background/50 cursor-pointer transition-colors"
+                  className="flex items-center gap-3 p-3 rounded-xl bg-zinc-900/50 hover:bg-zinc-800 cursor-pointer transition-colors"
                 >
                   <Checkbox
                     checked={item.checked}
                     onCheckedChange={() => toggleCommitment(item.id)}
                     className="data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
                   />
-                  <span className={item.checked ? 'text-green-400' : 'text-foreground'}>
+                  <span className={item.checked ? 'text-green-400' : 'text-white'}>
                     {item.text}
                   </span>
                 </label>
@@ -165,7 +166,7 @@ const CommitmentCeremony = ({ onStart, onLock }: CommitmentCeremonyProps) => {
             </Button>
 
             {!allCommitmentsMet() && (
-              <p className="text-center text-xs text-muted-foreground">
+              <p className="text-center text-xs text-zinc-500">
                 Complete all commitments to enable Start
               </p>
             )}
