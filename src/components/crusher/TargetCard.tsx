@@ -21,17 +21,17 @@ const TargetCard = ({ target, index, onStart, isCurrentlyActive }: TargetCardPro
 
   const getStatusColor = () => {
     switch (target.status) {
-      case 'locked': return 'bg-zinc-800/50 border-zinc-700';
-      case 'ready': return 'bg-yellow-500/10 border-yellow-500/30';
-      case 'in_progress': return 'bg-blue-500/10 border-blue-500/30 animate-pulse';
-      case 'done': return 'bg-green-500/10 border-green-500/30';
-      default: return 'bg-zinc-800/50 border-zinc-700';
+      case 'locked': return 'bg-black border-zinc-800';
+      case 'ready': return 'bg-black border-yellow-500/50';
+      case 'in_progress': return 'bg-black border-blue-500/50 animate-pulse';
+      case 'done': return 'bg-black border-green-500/50';
+      default: return 'bg-black border-zinc-800';
     }
   };
 
   const getStatusIcon = () => {
     switch (target.status) {
-      case 'locked': return <Lock className="w-5 h-5 text-zinc-500" />;
+      case 'locked': return <Lock className="w-5 h-5 text-zinc-600" />;
       case 'ready': return <Play className="w-5 h-5 text-yellow-400" />;
       case 'in_progress': return <Loader2 className="w-5 h-5 text-blue-400 animate-spin" />;
       case 'done': return <Check className="w-5 h-5 text-green-400" />;
@@ -46,8 +46,8 @@ const TargetCard = ({ target, index, onStart, isCurrentlyActive }: TargetCardPro
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className={cn(
-            "w-10 h-10 rounded-lg flex items-center justify-center",
-            target.status === 'locked' ? 'bg-zinc-700' : 
+            "w-12 h-12 rounded-lg flex items-center justify-center",
+            target.status === 'locked' ? 'bg-zinc-900' : 
             target.status === 'ready' ? 'bg-yellow-500/20' :
             target.status === 'in_progress' ? 'bg-blue-500/20' :
             'bg-green-500/20'
@@ -56,15 +56,15 @@ const TargetCard = ({ target, index, onStart, isCurrentlyActive }: TargetCardPro
           </div>
           <div>
             <h4 className={cn(
-              "font-semibold",
-              target.status === 'locked' ? 'text-zinc-500' : 'text-white'
+              "font-bold text-lg",
+              target.status === 'locked' ? 'text-zinc-600' : 'text-white'
             )}>
               {target.name}
             </h4>
-            <div className="flex items-center gap-2 text-sm text-zinc-400">
+            <div className="flex items-center gap-2 text-sm text-zinc-500">
               <Clock className="w-3.5 h-3.5" />
               <span>{formatMinutes(target.totalMinutes)} total</span>
-              <span className="text-zinc-600">•</span>
+              <span className="text-zinc-700">•</span>
               <span className="text-orange-400">Min: {formatMinutes(target.minMinutes)}</span>
             </div>
           </div>
@@ -99,7 +99,7 @@ const TargetCard = ({ target, index, onStart, isCurrentlyActive }: TargetCardPro
           )}
 
           {target.status === 'locked' && (
-            <div className="text-zinc-600 text-sm">
+            <div className="text-zinc-700 text-sm">
               Locked
             </div>
           )}

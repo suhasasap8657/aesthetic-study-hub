@@ -72,15 +72,15 @@ const CrusherCalendar = () => {
   const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   return (
-    <div className="bg-zinc-900/50 backdrop-blur-xl rounded-2xl p-5 border border-zinc-800">
+    <div className="bg-black rounded-2xl p-5 border border-zinc-800">
       <div className="flex items-center justify-between mb-4">
-        <Button variant="ghost" size="sm" onClick={prevMonth} className="h-8 w-8 p-0">
+        <Button variant="ghost" size="sm" onClick={prevMonth} className="h-8 w-8 p-0 text-zinc-400 hover:text-white hover:bg-zinc-900">
           <ChevronLeft className="w-4 h-4" />
         </Button>
-        <span className="font-semibold text-lg">
+        <span className="font-semibold text-lg text-white">
           {currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
         </span>
-        <Button variant="ghost" size="sm" onClick={nextMonth} className="h-8 w-8 p-0">
+        <Button variant="ghost" size="sm" onClick={nextMonth} className="h-8 w-8 p-0 text-zinc-400 hover:text-white hover:bg-zinc-900">
           <ChevronRight className="w-4 h-4" />
         </Button>
       </div>
@@ -88,7 +88,7 @@ const CrusherCalendar = () => {
       {/* Week days header */}
       <div className="grid grid-cols-7 gap-1 mb-2">
         {weekDays.map((day) => (
-          <div key={day} className="text-center text-xs text-zinc-500 py-1">
+          <div key={day} className="text-center text-xs text-zinc-600 py-1">
             {day}
           </div>
         ))}
@@ -111,8 +111,8 @@ const CrusherCalendar = () => {
                 aspect-square rounded-lg flex flex-col items-center justify-center text-sm
                 transition-all duration-200 relative
                 ${isToday ? 'ring-2 ring-pink-500' : ''}
-                ${status === 'future' ? 'bg-zinc-800/30 text-zinc-600' : ''}
-                ${status === 'no-data' ? 'bg-zinc-800/50 text-zinc-500' : ''}
+                ${status === 'future' ? 'bg-zinc-900/30 text-zinc-700' : ''}
+                ${status === 'no-data' ? 'bg-zinc-900/50 text-zinc-600' : ''}
                 ${status === 'green' ? 'bg-green-500/20 text-green-400' : ''}
                 ${status === 'red' ? 'bg-red-500/20 text-red-400' : ''}
                 ${status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' : ''}
@@ -122,7 +122,7 @@ const CrusherCalendar = () => {
               {status === 'green' && <Check className="w-3 h-3 mt-0.5" />}
               {status === 'red' && <X className="w-3 h-3 mt-0.5" />}
               {status === 'no-data' && !isToday && date < new Date() && (
-                <Minus className="w-3 h-3 mt-0.5 text-zinc-600" />
+                <Minus className="w-3 h-3 mt-0.5 text-zinc-700" />
               )}
             </div>
           );
@@ -135,13 +135,13 @@ const CrusherCalendar = () => {
           <div className="w-3 h-3 rounded bg-green-500/30 flex items-center justify-center">
             <Check className="w-2 h-2 text-green-400" />
           </div>
-          <span className="text-zinc-400">Completed</span>
+          <span className="text-zinc-500">Completed</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded bg-red-500/30 flex items-center justify-center">
             <X className="w-2 h-2 text-red-400" />
           </div>
-          <span className="text-zinc-400">Missed/Incomplete</span>
+          <span className="text-zinc-500">Missed/Incomplete</span>
         </div>
       </div>
     </div>
