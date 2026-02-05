@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ChevronLeft, ChevronRight, Check, X, Minus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, X, AlertTriangle, Minus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getCalendarMarks, CalendarMark } from '@/lib/firebase';
 
@@ -49,7 +49,7 @@ const CrusherCalendar = () => {
     return marks.find(m => m.date === dateStr);
   };
 
-  const getDayStatus = (date: Date) => {
+  const getDayStatus = (date: Date): 'full' | 'partial' | 'missed' | 'future' | 'no-data' => {
     const mark = getMarkForDate(date);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -113,14 +113,15 @@ const CrusherCalendar = () => {
                 ${isToday ? 'ring-2 ring-pink-500' : ''}
                 ${status === 'future' ? 'bg-zinc-900/30 text-zinc-700' : ''}
                 ${status === 'no-data' ? 'bg-zinc-900/50 text-zinc-600' : ''}
-                ${status === 'green' ? 'bg-green-500/20 text-green-400' : ''}
-                ${status === 'red' ? 'bg-red-500/20 text-red-400' : ''}
-                ${status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' : ''}
+                ${status === 'full' ? 'bg-green-500/20 text-green-400' : ''}
+                ${status === 'missed' ? 'bg-red-500/20 text-red-400' : ''}
+                ${status === 'partial' ? 'bg-yellow-500/20 text-yellow-400' : ''}
               `}
             >
               <span className="font-medium text-xs">{date.getDate()}</span>
-              {status === 'green' && <Check className="w-3 h-3 mt-0.5" />}
-              {status === 'red' && <X className="w-3 h-3 mt-0.5" />}
+              {status === 'full' && <Check className="w-3 h-3 mt-0.5" />}
+              {status === 'missed' && <X className="w-3 h-3 mt-0.5" />}
+              {status === 'partial' && <AlertTriangle className="w-3 h-3 mt-0.5" />}
               {status === 'no-data' && !isToday && date < new Date() && (
                 <Minus className="w-3 h-3 mt-0.5 text-zinc-700" />
               )}
@@ -135,13 +136,19 @@ const CrusherCalendar = () => {
           <div className="w-3 h-3 rounded bg-green-500/30 flex items-center justify-center">
             <Check className="w-2 h-2 text-green-400" />
           </div>
-          <span className="text-zinc-500">Completed</span>
+          <span className="text-zinc-500">All Done</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded bg-yellow-500/30 flex items-center justify-center">
+            <AlertTriangle className="w-2 h-2 text-yellow-400" />
+          </div>
+          <span className="text-zinc-500">Partial</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded bg-red-500/30 flex items-center justify-center">
             <X className="w-2 h-2 text-red-400" />
           </div>
-          <span className="text-zinc-500">Missed/Incomplete</span>
+          <span className="text-zinc-500">Missed</span>
         </div>
       </div>
     </div>

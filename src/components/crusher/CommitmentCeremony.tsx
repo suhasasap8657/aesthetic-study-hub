@@ -1,177 +1,108 @@
 import { useState } from 'react';
-import { Lock, Clock, AlertCircle } from 'lucide-react';
+import { Check, Keyboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { getFallbackPIN, isWithinTimeWindow } from '@/lib/firebase';
-import { CommitmentItem, DEFAULT_COMMITMENTS, COMMITMENT_PHRASE } from '@/types/studyCrusher';
+import { DEFAULT_COMMITMENTS, COMMITMENT_PHRASE, CommitmentItem } from '@/types/studyCrusher';
 
 interface CommitmentCeremonyProps {
   onStart: () => void;
   onLock: (reason: string) => void;
-  pinVerified?: boolean;
 }
 
-const CommitmentCeremony = ({ onStart, onLock, pinVerified = false }: CommitmentCeremonyProps) => {
-  const [pin, setPin] = useState('');
-  const [pinError, setPinError] = useState('');
-  const [pinAttempts, setPinAttempts] = useState(0);
-  const [commitmentStatement, setCommitmentStatement] = useState('');
+const CommitmentCeremony = ({ onStart, onLock }: CommitmentCeremonyProps) => {
+  const [typedPhrase, setTypedPhrase] = useState('');
   const [commitments, setCommitments] = useState<CommitmentItem[]>(DEFAULT_COMMITMENTS);
-  const [step, setStep] = useState<'pin' | 'commitment'>(pinVerified ? 'commitment' : 'pin');
+  const [attempts, setAttempts] = useState(0);
 
-  const handlePinSubmit = () => {
-    // Check time window first
-    if (!isWithinTimeWindow()) {
-      onLock('Outside allowed time window (8 AM - 10 PM). Try again tomorrow.');
-      return;
-    }
+  const phraseMatches = typedPhrase.toLowerCase().trim() === COMMITMENT_PHRASE.toLowerCase();
+  const allChecked = commitments.every(c => c.checked);
+  const canStart = phraseMatches && allChecked;
 
-    const correctPin = getFallbackPIN(new Date());
+  const handleCheckChange = (id: string, checked: boolean) => {
+    setCommitments(prev =>
+      prev.map(c => (c.id === id ? { ...c, checked } : c))
+    );
+  };
+
+  const handlePhraseChange = (value: string) => {
+    setTypedPhrase(value);
     
-    if (pin === correctPin) {
-      setStep('commitment');
-      setPinError('');
-    } else {
-      const newAttempts = pinAttempts + 1;
-      setPinAttempts(newAttempts);
-      
-      if (newAttempts >= 5) {
-        onLock('Too many wrong PIN attempts. Ask for tomorrow\'s PIN.');
-      } else {
-        setPinError(`Wrong PIN. ${5 - newAttempts} attempts remaining.`);
+    // Count wrong attempts
+    if (value.length >= COMMITMENT_PHRASE.length && value.toLowerCase().trim() !== COMMITMENT_PHRASE.toLowerCase()) {
+      setAttempts(prev => prev + 1);
+      if (attempts >= 2) {
+        onLock('Too many wrong attempts in commitment ceremony');
       }
     }
   };
 
-  const toggleCommitment = (id: string) => {
-    setCommitments(prev => prev.map(c => 
-      c.id === id ? { ...c, checked: !c.checked } : c
-    ));
-  };
-
-  const allCommitmentsMet = () => {
-    return commitments.every(c => c.checked) && 
-           commitmentStatement.toLowerCase().includes('today i will finish all targets');
-  };
-
-  const currentHour = new Date().getHours();
-  const isValidTime = currentHour >= 8 && currentHour < 22;
-
   return (
-    <div className="max-w-md mx-auto">
-      {step === 'pin' && (
-        <div className="bg-black rounded-2xl p-6 space-y-6 border border-zinc-800">
-          <div className="text-center">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-r from-pink-500 to-purple-500 flex items-center justify-center mx-auto mb-4">
-              <Lock className="w-8 h-8 text-white" />
-            </div>
-            <h3 className="text-xl font-bold mb-2 text-white">Enter Daily PIN</h3>
-            <p className="text-sm text-zinc-400">
-              Enter today's PIN to start your study session
-            </p>
-          </div>
+    <div className="bg-black rounded-2xl p-6 border border-zinc-800 max-w-lg mx-auto">
+      <div className="text-center mb-6">
+        <div className="w-16 h-16 rounded-full bg-gradient-to-r from-pink-500/20 to-purple-500/20 flex items-center justify-center mx-auto mb-4">
+          <Keyboard className="w-8 h-8 text-pink-400" />
+        </div>
+        <h2 className="text-2xl font-bold text-white mb-2">Commitment Ceremony</h2>
+        <p className="text-zinc-400">Type the exact phrase and check all boxes to start</p>
+      </div>
 
-          {!isValidTime && (
-            <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 flex items-start gap-3">
-              <Clock className="w-5 h-5 text-red-400 mt-0.5" />
-              <div>
-                <p className="text-red-400 font-medium">Outside Study Hours</p>
-                <p className="text-red-300/70 text-sm">Sessions only allowed 8 AM - 10 PM</p>
-              </div>
-            </div>
-          )}
+      {/* Phrase to type */}
+      <div className="mb-6">
+        <label className="block text-sm text-zinc-400 mb-2">Type this exactly:</label>
+        <div className="bg-zinc-900 rounded-xl p-4 mb-3 border border-zinc-700">
+          <p className="text-lg text-pink-400 font-medium">"{COMMITMENT_PHRASE}"</p>
+        </div>
+        <Input
+          value={typedPhrase}
+          onChange={(e) => handlePhraseChange(e.target.value)}
+          placeholder="Type the phrase here..."
+          className="bg-zinc-900 border-zinc-700 text-white text-lg h-14"
+        />
+        {typedPhrase && !phraseMatches && typedPhrase.length > 10 && (
+          <p className="text-red-400 text-sm mt-2">Phrase doesn't match. Type exactly as shown.</p>
+        )}
+        {phraseMatches && (
+          <p className="text-green-400 text-sm mt-2 flex items-center gap-1">
+            <Check className="w-4 h-4" /> Phrase matches!
+          </p>
+        )}
+      </div>
 
-          <div className="space-y-4">
-            <Input
-              type="password"
-              placeholder="Enter 4-digit PIN"
-              value={pin}
-              onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
-              maxLength={4}
-              className="text-center text-2xl tracking-[0.5em] font-mono bg-zinc-900 border-zinc-700 text-white"
+      {/* Checkboxes */}
+      <div className="space-y-3 mb-6">
+        {commitments.map((item) => (
+          <label
+            key={item.id}
+            className="flex items-center gap-3 p-3 rounded-xl bg-zinc-900 border border-zinc-800 cursor-pointer hover:border-zinc-700 transition-colors"
+          >
+            <Checkbox
+              checked={item.checked}
+              onCheckedChange={(checked) => handleCheckChange(item.id, checked as boolean)}
+              className="border-zinc-600"
             />
-            
-            {pinError && (
-              <div className="flex items-center gap-2 text-red-400 text-sm">
-                <AlertCircle className="w-4 h-4" />
-                {pinError}
-              </div>
-            )}
+            <span className={item.checked ? 'text-white' : 'text-zinc-400'}>{item.text}</span>
+          </label>
+        ))}
+      </div>
 
-            <Button
-              onClick={handlePinSubmit}
-              disabled={pin.length !== 4 || !isValidTime}
-              className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:opacity-90"
-            >
-              Verify PIN
-            </Button>
-          </div>
+      {/* Start button */}
+      <Button
+        onClick={onStart}
+        disabled={!canStart}
+        className={`w-full h-14 text-lg transition-all ${
+          canStart
+            ? 'bg-gradient-to-r from-green-500 to-emerald-500 hover:opacity-90'
+            : 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
+        }`}
+      >
+        {canStart ? 'Start Study Session 🔥' : 'Complete all requirements above'}
+      </Button>
 
-          <div className="text-center text-xs text-zinc-500">
-            <p>Today's PIN is based on date calculation</p>
-          </div>
-        </div>
-      )}
-
-      {step === 'commitment' && (
-        <div className="bg-black rounded-2xl p-6 space-y-6 border border-zinc-800">
-          <div className="text-center">
-            <h3 className="text-xl font-bold mb-2 text-white">Commitment Ceremony</h3>
-            <p className="text-sm text-zinc-400">
-              Make your commitment before starting
-            </p>
-          </div>
-
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm text-zinc-400 mb-2 block">
-                Type your commitment statement:
-              </label>
-              <Input
-                placeholder={COMMITMENT_PHRASE}
-                value={commitmentStatement}
-                onChange={(e) => setCommitmentStatement(e.target.value)}
-                className="bg-zinc-900 border-zinc-700 text-white"
-              />
-              <p className="text-xs text-zinc-500 mt-1">
-                Must include "Today I will finish all targets"
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              {commitments.map((item) => (
-                <label
-                  key={item.id}
-                  className="flex items-center gap-3 p-3 rounded-xl bg-zinc-900/50 hover:bg-zinc-800 cursor-pointer transition-colors"
-                >
-                  <Checkbox
-                    checked={item.checked}
-                    onCheckedChange={() => toggleCommitment(item.id)}
-                    className="data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
-                  />
-                  <span className={item.checked ? 'text-green-400' : 'text-white'}>
-                    {item.text}
-                  </span>
-                </label>
-              ))}
-            </div>
-
-            <Button
-              onClick={onStart}
-              disabled={!allCommitmentsMet()}
-              className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:opacity-90 disabled:opacity-50"
-            >
-              🚀 Start Session
-            </Button>
-
-            {!allCommitmentsMet() && (
-              <p className="text-center text-xs text-zinc-500">
-                Complete all commitments to enable Start
-              </p>
-            )}
-          </div>
-        </div>
+      {attempts > 0 && (
+        <p className="text-center text-orange-400 text-sm mt-4">
+          Wrong attempts: {attempts}/3
+        </p>
       )}
     </div>
   );

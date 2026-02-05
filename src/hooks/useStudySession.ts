@@ -7,9 +7,19 @@ import {
   getUserStats, 
   updateUserStats,
   UserStats,
-  VideoProgress
+  VideoProgress,
+  checkYesterdayStatus,
+  logFailure
 } from '@/lib/firebase';
-import { StudyTarget, VideoSlot, DEFAULT_TARGETS, DEFAULT_VIDEOS, SessionState } from '@/types/studyCrusher';
+import { 
+  StudyTarget, 
+  YouTubeVideoSlot, 
+  DEFAULT_TARGETS, 
+  DEFAULT_YOUTUBE_VIDEOS, 
+  SessionState,
+  getTodayTargets,
+  REQUIRED_VIDEO_WATCH_TIME
+} from '@/types/studyCrusher';
 
 export const useStudySession = () => {
   const [session, setSession] = useState<SessionState>({
@@ -17,18 +27,20 @@ export const useStudySession = () => {
     startTime: null,
     videosCompleted: 0,
     currentVideoIndex: -1,
-    videos: DEFAULT_VIDEOS.map((v, i) => ({ ...v, status: i === 0 ? 'locked' : 'locked' })),
+    videos: DEFAULT_YOUTUBE_VIDEOS.map((v, i) => ({ ...v, status: i === 0 ? 'locked' : 'locked' as const })),
     currentTargetIndex: -1,
-    targets: DEFAULT_TARGETS,
+    targets: getTodayTargets(),
     distractionCount: 0,
     focusCheckIns: [],
     isLocked: false,
-    aiTimeUsed: 0
+    aiTimeUsed: 0,
+    totalVideoWatchTime: 0
   });
   
   const [stats, setStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [dailySession, setDailySession] = useState<DailySession | null>(null);
+  const [showFailurePopup, setShowFailurePopup] = useState(false);
 
   const loadSession = useCallback(async () => {
     setLoading(true);
@@ -37,39 +49,34 @@ export const useStudySession = () => {
       const existingSession = await getDailySession(today);
       const userStats = await getUserStats();
       
+      // Check if yesterday was incomplete
+      const yesterdayIncomplete = await checkYesterdayStatus();
+      if (yesterdayIncomplete) {
+        setShowFailurePopup(true);
+      }
+      
       setStats(userStats);
       setDailySession(existingSession);
       
       if (existingSession) {
-        // Check if session was incomplete
         if (existingSession.sessionStarted && !existingSession.completed) {
           // Session was started but not completed - reset
           setSession(prev => ({
             ...prev,
             isLocked: false,
-            videos: DEFAULT_VIDEOS.map((v, i) => ({ ...v, status: i === 0 ? 'locked' : 'locked' })),
-            targets: DEFAULT_TARGETS.map(t => ({ ...t, status: 'locked' as const }))
+            videos: DEFAULT_YOUTUBE_VIDEOS.map((v, i) => ({ ...v, status: i === 0 ? 'locked' : 'locked' as const })),
+            targets: getTodayTargets().map(t => ({ ...t, status: 'locked' as const })),
+            totalVideoWatchTime: 0
           }));
         } else if (existingSession.completed) {
           // Session already completed today
-          const videosFromSession = existingSession.videosWatched?.map((v, i) => ({
-            ...DEFAULT_VIDEOS[i],
-            ...v,
-            status: 'completed' as const
-          })) || DEFAULT_VIDEOS;
-          
           setSession(prev => ({
             ...prev,
             isActive: false,
-            videosCompleted: 3,
-            videos: videosFromSession,
-            targets: existingSession.targets as StudyTarget[]
-          }));
-        } else if (existingSession.sessionLocked) {
-          setSession(prev => ({
-            ...prev,
-            isLocked: true,
-            lockReason: 'Wrong PIN or outside time window'
+            videosCompleted: 2,
+            videos: DEFAULT_YOUTUBE_VIDEOS.map(v => ({ ...v, status: 'completed' as const })),
+            targets: existingSession.targets as StudyTarget[],
+            totalVideoWatchTime: existingSession.totalVideoWatchTime || 0
           }));
         }
       }
@@ -86,26 +93,28 @@ export const useStudySession = () => {
 
   const startSession = useCallback(async () => {
     const today = getTodayKey();
-    const initialVideos: VideoProgress[] = DEFAULT_VIDEOS.map(v => ({
+    const todayTargets = getTodayTargets();
+    
+    const initialVideos: VideoProgress[] = DEFAULT_YOUTUBE_VIDEOS.map(v => ({
       id: v.id,
       title: v.title,
       completed: false,
-      watchedDuration: 0,
-      totalDuration: 0
+      watchedSeconds: 0
     }));
     
     const newSession: DailySession = {
       date: today,
       completed: false,
       videosWatched: initialVideos,
-      targets: session.targets.map(t => ({
+      targets: todayTargets.map(t => ({
         ...t,
         status: 'locked' as const
       })),
       totalOvertime: 0,
       distractionCount: 0,
       sessionStarted: new Date().toISOString(),
-      aiTimeUsed: 0
+      aiTimeUsed: 0,
+      totalVideoWatchTime: 0
     };
     
     await saveDailySession(newSession);
@@ -115,20 +124,40 @@ export const useStudySession = () => {
       ...prev,
       isActive: true,
       startTime: new Date().toISOString(),
-      videos: prev.videos.map((v, i) => ({
+      videos: DEFAULT_YOUTUBE_VIDEOS.map((v, i) => ({
         ...v,
-        status: i === 0 ? 'ready' : 'locked'
+        status: i === 0 ? 'ready' : 'locked' as const
       })),
-      targets: prev.targets.map(t => ({
+      targets: todayTargets.map(t => ({
         ...t,
-        status: 'locked'
-      }))
+        status: 'locked' as const
+      })),
+      totalVideoWatchTime: 0
     }));
-  }, [session.targets]);
+  }, []);
+
+  const updateVideoWatchTime = useCallback(async (seconds: number) => {
+    setSession(prev => ({
+      ...prev,
+      totalVideoWatchTime: prev.totalVideoWatchTime + seconds
+    }));
+    
+    if (dailySession) {
+      await saveDailySession({
+        ...dailySession,
+        totalVideoWatchTime: (dailySession.totalVideoWatchTime || 0) + seconds
+      });
+    }
+  }, [dailySession]);
 
   const completeVideo = useCallback(async (videoIndex: number) => {
     const videosCompleted = videoIndex + 1;
-    const allVideosCompleted = videosCompleted >= 3;
+    const allVideosCompleted = videosCompleted >= 2;
+    const totalWatchTime = session.totalVideoWatchTime;
+    const hasEnoughWatchTime = totalWatchTime >= REQUIRED_VIDEO_WATCH_TIME;
+    
+    // Only unlock targets if watched 1 hour total
+    const canUnlockTargets = allVideosCompleted && hasEnoughWatchTime;
     
     setSession(prev => ({
       ...prev,
@@ -138,15 +167,15 @@ export const useStudySession = () => {
         if (i === videoIndex) {
           return { ...v, status: 'completed' as const };
         }
-        if (i === videoIndex + 1 && i < 3) {
+        if (i === videoIndex + 1 && i < 2) {
           return { ...v, status: 'ready' as const };
         }
         return v;
       }),
-      targets: allVideosCompleted 
+      targets: canUnlockTargets 
         ? prev.targets.map((t, i) => ({
             ...t,
-            status: i === 0 ? 'ready' : 'locked'
+            status: i === 0 ? 'ready' : 'locked' as const
           }))
         : prev.targets
     }));
@@ -154,7 +183,7 @@ export const useStudySession = () => {
     if (dailySession) {
       const updatedVideos = dailySession.videosWatched?.map((v, i) => {
         if (i === videoIndex) {
-          return { ...v, completed: true, completedAt: new Date().toISOString() };
+          return { ...v, completed: true };
         }
         return v;
       }) || [];
@@ -165,8 +194,8 @@ export const useStudySession = () => {
       });
     }
     
-    return allVideosCompleted;
-  }, [dailySession]);
+    return canUnlockTargets;
+  }, [dailySession, session.totalVideoWatchTime]);
 
   const startTarget = useCallback((targetIndex: number) => {
     setSession(prev => ({
@@ -202,7 +231,6 @@ export const useStudySession = () => {
       targets: updatedTargets
     }));
 
-    // Check if all targets are done
     const allDone = updatedTargets.every(t => t.status === 'done');
     
     if (dailySession) {
@@ -213,6 +241,7 @@ export const useStudySession = () => {
         targets: updatedTargets,
         totalOvertime,
         completed: allDone,
+        status: allDone ? 'full' : 'partial',
         completionTime: allDone ? new Date().toISOString() : undefined
       });
 
@@ -237,9 +266,15 @@ export const useStudySession = () => {
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayKey = yesterday.toISOString().split('T')[0];
 
+    // Check if yesterday was fully completed
+    const yesterdaySession = await getDailySession(yesterdayKey);
     let newStreak = 1;
-    if (currentStats.lastCompletedDate === yesterdayKey) {
+    
+    if (currentStats.lastCompletedDate === yesterdayKey && yesterdaySession?.completed) {
       newStreak = currentStats.streakCount + 1;
+    } else if (currentStats.lastCompletedDate !== yesterdayKey) {
+      // Streak broken
+      newStreak = 1;
     }
 
     const updatedStats: UserStats = {
@@ -267,9 +302,9 @@ export const useStudySession = () => {
       });
     }
 
-    // Too many distractions = session reset
     if (newCount >= 3) {
-      return true; // Signal reset needed
+      await logFailure(getTodayKey(), 'Too many distractions');
+      return true;
     }
     return false;
   }, [session.distractionCount, dailySession]);
@@ -281,16 +316,7 @@ export const useStudySession = () => {
       lockReason: reason
     }));
 
-    const today = getTodayKey();
-    await saveDailySession({
-      date: today,
-      completed: false,
-      videosWatched: [],
-      targets: [],
-      totalOvertime: 0,
-      distractionCount: 0,
-      sessionLocked: true
-    });
+    await logFailure(getTodayKey(), reason);
   }, []);
 
   const updateAITime = useCallback(async (minutes: number) => {
@@ -307,11 +333,16 @@ export const useStudySession = () => {
     }
   }, [dailySession]);
 
+  const dismissFailurePopup = useCallback(() => {
+    setShowFailurePopup(false);
+  }, []);
+
   return {
     session,
     stats,
     loading,
     dailySession,
+    showFailurePopup,
     startSession,
     completeVideo,
     startTarget,
@@ -319,6 +350,8 @@ export const useStudySession = () => {
     addDistraction,
     lockSession,
     updateAITime,
+    updateVideoWatchTime,
+    dismissFailurePopup,
     refreshSession: loadSession
   };
 };
