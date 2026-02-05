@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Study Crusher - Focus Mode</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="/pwa-512x512.png">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="screen active">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <p>Loading Study Crusher...</p>
+        </div>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div id="dashboard-screen" class="screen">
+        <header class="header">
+            <h1 id="date-display" class="date-title"></h1>
+            <p class="subtitle">Study Crusher Mode</p>
+        </header>
+
+        <!-- Goal Section -->
+        <div class="goal-card">
+            <div class="goal-icon">🎯</div>
+            <div class="goal-text">
+                <h3>AIR under 1000 - BMCRI or nothing! 💪</h3>
+                <p>Focus. Execute. Repeat.</p>
+            </div>
+        </div>
+
+        <!-- Streak Counter -->
+        <div class="streak-card">
+            <div class="streak-icon">🔥</div>
+            <div class="streak-number" id="streak-count">0</div>
+            <div class="streak-label">Day Streak</div>
+        </div>
+
+        <!-- Calendar -->
+        <div class="calendar-card">
+            <div class="calendar-header">
+                <button class="nav-btn" id="prev-month">&lt;</button>
+                <span id="month-display"></span>
+                <button class="nav-btn" id="next-month">&gt;</button>
+            </div>
+            <div class="calendar-weekdays">
+                <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+            </div>
+            <div class="calendar-grid" id="calendar-grid"></div>
+            <div class="calendar-legend">
+                <div class="legend-item"><span class="legend-dot green"></span>All Done</div>
+                <div class="legend-item"><span class="legend-dot yellow"></span>Partial</div>
+                <div class="legend-item"><span class="legend-dot red"></span>Missed</div>
+            </div>
+        </div>
+
+        <!-- Start Button -->
+        <button class="start-btn" id="start-session-btn">
+            ▶ Start Today's Session
+        </button>
+
+        <button class="overview-btn" id="overview-btn">
+            📊 Weekly Overview
+        </button>
+    </div>
+
+    <!-- Commitment Ceremony -->
+    <div id="commitment-screen" class="screen">
+        <div class="commitment-card">
+            <div class="ceremony-icon">⌨️</div>
+            <h2>Commitment Ceremony</h2>
+            <p class="ceremony-subtitle">Type the exact phrase and check all boxes to start</p>
+
+            <div class="phrase-box">
+                <label>Type this exactly:</label>
+                <div class="phrase-display">"Today I will finish all targets without distractions"</div>
+                <input type="text" id="commitment-input" placeholder="Type the phrase here..." class="phrase-input">
+                <div id="phrase-status" class="phrase-status"></div>
+            </div>
+
+            <div class="commitments-list">
+                <label class="commitment-item">
+                    <input type="checkbox" class="commitment-check">
+                    <span>Phone on Do Not Disturb</span>
+                </label>
+                <label class="commitment-item">
+                    <input type="checkbox" class="commitment-check">
+                    <span>No snacks until done</span>
+                </label>
+                <label class="commitment-item">
+                    <input type="checkbox" class="commitment-check">
+                    <span>No social media breaks</span>
+                </label>
+                <label class="commitment-item">
+                    <input type="checkbox" class="commitment-check">
+                    <span>Complete focus for each target</span>
+                </label>
+            </div>
+
+            <button class="start-session-btn disabled" id="confirm-start-btn" disabled>
+                Complete all requirements above
+            </button>
+        </div>
+    </div>
+
+    <!-- Study Room -->
+    <div id="study-room-screen" class="screen">
+        <div class="progress-bar-container">
+            <div class="progress-bar" id="overall-progress"></div>
+        </div>
+
+        <h2 class="section-title">📹 Today's Lectures</h2>
+        <div class="videos-container" id="videos-container">
+            <!-- Video cards will be inserted here -->
+        </div>
+
+        <div id="watch-time-message" class="watch-time-message hidden">
+            ⏰ Watch at least 1 hour total to unlock targets
+            <br><span id="current-watch-time">Current: 0 min / 60 min required</span>
+        </div>
+
+        <h2 class="section-title">🎯 Today's Targets</h2>
+        <div class="targets-container" id="targets-container">
+            <!-- Target cards will be inserted here -->
+        </div>
+    </div>
+
+    <!-- Focus Mode -->
+    <div id="focus-screen" class="screen">
+        <div class="focus-target-name" id="focus-target-name"></div>
+        <div class="focus-timer" id="focus-timer">00:00:00</div>
+        <div class="overtime-label hidden" id="overtime-label">OVERTIME</div>
+        <button class="stop-btn hidden" id="stop-target-btn">✕ Stop Target</button>
+        <div class="focus-hint">
+            <p>Stay focused. No distractions allowed.</p>
+            <p>Switching tabs will be detected</p>
+        </div>
+    </div>
+
+    <!-- Focus Check Modal -->
+    <div id="focus-check-modal" class="modal hidden">
+        <div class="modal-content focus-check">
+            <div class="focus-check-icon">⚡</div>
+            <h3>Still Focused?</h3>
+            <p>Click YES within <span id="focus-check-countdown">10</span> seconds</p>
+            <button class="focus-yes-btn" id="focus-yes-btn">YES, I'm Focused!</button>
+        </div>
+    </div>
+
+    <!-- Target Completion Modal -->
+    <div id="target-complete-modal" class="modal hidden">
+        <div class="modal-content target-complete">
+            <div class="complete-icon">✅</div>
+            <h3 id="completed-target-name">Target Done!</h3>
+            <p>"Good, you are doing well! Keep up, BMCRI keliye mehnat karti rahooo." 💪</p>
+            <button class="continue-btn" id="target-continue-btn">Continue</button>
+        </div>
+    </div>
+
+    <!-- Failure Modal -->
+    <div id="failure-modal" class="modal hidden">
+        <div class="modal-content failure">
+            <div class="failure-icon">⚠️</div>
+            <h3>Session Incomplete!</h3>
+            <p class="failure-message">
+                "Itna lazy hogayi kya tum? Aise milega BMCRI? Jaaag jaaa, yeh makaaari karna band karde and padhai pe dyaan de. Chal punishment milegi tumhe uske liye text karo then punishment lo aaaj ka."
+            </p>
+            <button class="understand-btn" id="understand-btn">I Understand - Start Fresh</button>
+        </div>
+    </div>
+
+    <!-- Reward Screen -->
+    <div id="reward-screen" class="screen">
+        <div class="reward-content">
+            <div class="trophy">🏆</div>
+            <h1>CRUSHED IT! 💪</h1>
+            <p class="reward-subtitle">You completed today's entire study session!</p>
+            
+            <div class="reward-message">
+                "aise hi padhti rahogi toh BMCRI miljayega! 🔥"
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">⏱️</div>
+                    <div class="stat-value" id="total-time">0h</div>
+                    <div class="stat-label">Total Study Time</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🔥</div>
+                    <div class="stat-value" id="reward-streak">0</div>
+                    <div class="stat-label">Day Streak</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🎯</div>
+                    <div class="stat-value" id="targets-done">0/0</div>
+                    <div class="stat-label">Targets Complete</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⚡</div>
+                    <div class="stat-value" id="distractions">0</div>
+                    <div class="stat-label">Distractions</div>
+                </div>
+            </div>
+
+            <button class="home-btn" id="reward-home-btn">Continue to Home</button>
+        </div>
+    </div>
+
+    <!-- Distraction Warning -->
+    <div id="distraction-warning" class="distraction-warning hidden">
+        ⚠️ Distraction detected! (<span id="distraction-count">0</span>/3)
+    </div>
+
+    <!-- AI Doubt Solver Button -->
+    <button class="ai-btn hidden" id="ai-btn">?</button>
+
+    <!-- AI Sidebar -->
+    <div id="ai-sidebar" class="ai-sidebar hidden">
+        <div class="ai-header">
+            <div class="ai-title">
+                <span class="ai-icon">?</span>
+                <div>
+                    <strong>AI Doubt Solver</strong>
+                    <small>NEET questions only</small>
+                </div>
+            </div>
+            <button class="close-ai" id="close-ai">&times;</button>
+        </div>
+        <div class="ai-time-warning" id="ai-time-warning">
+            ⏰ <span id="ai-time-remaining">15</span> minutes remaining
+        </div>
+        <div class="ai-messages" id="ai-messages">
+            <div class="ai-placeholder">
+                <span>?</span>
+                <p>Ask your NEET-related doubts here.</p>
+                <small>Chemistry, Biology, Physics only.</small>
+            </div>
+        </div>
+        <form class="ai-input-form" id="ai-form">
+            <input type="text" id="ai-input" placeholder="Ask your doubt..." class="ai-input">
+            <button type="submit" class="ai-send-btn">➤</button>
+        </form>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

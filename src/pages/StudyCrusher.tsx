@@ -1,10 +1,10 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Target, Play, Lock, BarChart3, Calendar, Image, Zap } from 'lucide-react';
+import { Target, Play, Lock, BarChart3, Image } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useStudySession } from '@/hooks/useStudySession';
 import CommitmentCeremony from '@/components/crusher/CommitmentCeremony';
-import VideoCard from '@/components/crusher/VideoCard';
+import YouTubeVideoCard from '@/components/crusher/YouTubeVideoCard';
 import TargetCard from '@/components/crusher/TargetCard';
 import FocusMode from '@/components/crusher/FocusMode';
 import RewardScreen from '@/components/crusher/RewardScreen';
@@ -12,10 +12,11 @@ import CrusherCalendar from '@/components/crusher/CrusherCalendar';
 import StatsGraph from '@/components/crusher/StatsGraph';
 import StreakCounter from '@/components/crusher/StreakCounter';
 import AIDoubtSolver from '@/components/crusher/AIDoubtSolver';
-import PINModal from '@/components/crusher/PINModal';
+import FailureModal from '@/components/crusher/FailureModal';
+import TargetCompletionModal from '@/components/crusher/TargetCompletionModal';
+import { REQUIRED_VIDEO_WATCH_TIME } from '@/types/studyCrusher';
 
 // Goal image and message - editable
-const GOAL_IMAGE = '/placeholder.svg';
 const GOAL_MESSAGE = 'AIR under 1000 - BMCRI or nothing! 💪';
 
 const StudyCrusher = () => {
@@ -24,14 +25,16 @@ const StudyCrusher = () => {
     session,
     stats,
     loading,
-    dailySession,
+    showFailurePopup,
     startSession,
     completeVideo,
     startTarget,
     completeTarget,
     addDistraction,
     lockSession,
-    updateAITime
+    updateAITime,
+    updateVideoWatchTime,
+    dismissFailurePopup
   } = useStudySession();
 
   const [showCeremony, setShowCeremony] = useState(false);
@@ -40,8 +43,8 @@ const StudyCrusher = () => {
   const [showReward, setShowReward] = useState(false);
   const [showWeeklyOverview, setShowWeeklyOverview] = useState(false);
   const [distractionWarning, setDistractionWarning] = useState('');
-  const [pinVerified, setPinVerified] = useState(false);
-  const [showPINModal, setShowPINModal] = useState(false);
+  const [completedTargetName, setCompletedTargetName] = useState('');
+  const [showTargetCompletion, setShowTargetCompletion] = useState(false);
 
   const today = new Date();
   const dateString = today.toLocaleDateString('en-US', {
@@ -51,14 +54,7 @@ const StudyCrusher = () => {
     day: 'numeric'
   });
 
-  // Check for incomplete previous session
-  useEffect(() => {
-    if (!loading && dailySession?.sessionStarted && !dailySession?.completed) {
-      setDistractionWarning('Previous session incomplete — starting over');
-    }
-  }, [loading, dailySession]);
-
-  // Warn on page close
+  // Warn on page close during active session
   useEffect(() => {
     if (session.isActive) {
       const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -71,20 +67,17 @@ const StudyCrusher = () => {
     }
   }, [session.isActive]);
 
-  const handlePINSuccess = () => {
-    setPinVerified(true);
-    setShowPINModal(false);
-    setShowCeremony(true);
-  };
-
   const handleStartSession = async () => {
     await startSession();
     setShowCeremony(false);
   };
 
+  const handleVideoWatchTimeUpdate = useCallback((seconds: number) => {
+    updateVideoWatchTime(seconds);
+  }, [updateVideoWatchTime]);
+
   const handleVideoComplete = async (videoIndex: number) => {
-    const allDone = await completeVideo(videoIndex);
-    // After completing a video, check if all videos are done
+    await completeVideo(videoIndex);
   };
 
   const handleStartTarget = (index: number) => {
@@ -95,11 +88,20 @@ const StudyCrusher = () => {
 
   const handleTargetComplete = async (timeSpent: number, overtime: number) => {
     setShowFocusMode(false);
+    const targetName = session.targets[activeTargetIndex]?.name || 'Target';
     const allDone = await completeTarget(activeTargetIndex, timeSpent, overtime);
+    
+    // Show individual target completion modal
+    setCompletedTargetName(targetName);
+    setShowTargetCompletion(true);
+    
     setActiveTargetIndex(-1);
     
     if (allDone) {
-      setShowReward(true);
+      setTimeout(() => {
+        setShowTargetCompletion(false);
+        setShowReward(true);
+      }, 2000);
     }
   };
 
@@ -125,7 +127,9 @@ const StudyCrusher = () => {
   const totalItems = session.videos.length + session.targets.length;
   const progressPercentage = ((completedVideos + completedTargets) / totalItems) * 100;
 
-  const allVideosCompleted = session.videosCompleted >= 3;
+  const allVideosCompleted = session.videosCompleted >= 2;
+  const hasEnoughWatchTime = session.totalVideoWatchTime >= REQUIRED_VIDEO_WATCH_TIME;
+  const targetsUnlocked = allVideosCompleted && hasEnoughWatchTime;
 
   if (loading) {
     return (
@@ -135,9 +139,9 @@ const StudyCrusher = () => {
     );
   }
 
-  // PIN Modal
-  if (showPINModal) {
-    return <PINModal onSuccess={handlePINSuccess} onLock={handleLock} />;
+  // Failure modal for incomplete yesterday
+  if (showFailurePopup) {
+    return <FailureModal isOpen={showFailurePopup} onClose={dismissFailurePopup} />;
   }
 
   // Show lock screen
@@ -149,7 +153,7 @@ const StudyCrusher = () => {
             <Lock className="w-10 h-10 text-red-400" />
           </div>
           <h1 className="text-2xl font-bold text-white mb-4">Session Locked</h1>
-          <p className="text-zinc-400 mb-6">{session.lockReason || 'Ask for tomorrow\'s PIN'}</p>
+          <p className="text-zinc-400 mb-6">{session.lockReason || 'Session has been locked'}</p>
           <Button
             variant="outline"
             onClick={() => navigate('/')}
@@ -217,6 +221,13 @@ const StudyCrusher = () => {
 
   return (
     <div className="min-h-screen bg-black text-white">
+      {/* Target completion modal */}
+      <TargetCompletionModal
+        isOpen={showTargetCompletion}
+        onClose={() => setShowTargetCompletion(false)}
+        targetName={completedTargetName}
+      />
+
       {/* Top progress bar */}
       {session.isActive && (
         <div className="fixed top-0 left-0 right-0 h-1.5 bg-zinc-900 z-50">
@@ -278,7 +289,7 @@ const StudyCrusher = () => {
         {!session.isActive && !showCeremony && (
           <div className="text-center mb-8">
             <Button
-              onClick={() => setShowPINModal(true)}
+              onClick={() => setShowCeremony(true)}
               className="bg-gradient-to-r from-green-500 to-emerald-500 hover:opacity-90 text-lg px-8 py-6 h-auto"
             >
               <Play className="w-5 h-5 mr-2" />
@@ -302,7 +313,6 @@ const StudyCrusher = () => {
           <CommitmentCeremony 
             onStart={handleStartSession} 
             onLock={handleLock}
-            pinVerified={pinVerified}
           />
         )}
 
@@ -315,23 +325,32 @@ const StudyCrusher = () => {
                 <Play className="w-5 h-5 text-pink-400" />
                 Today's Lectures
                 <span className="text-sm text-zinc-500 font-normal">
-                  ({completedVideos}/3 done)
+                  ({completedVideos}/2 done)
                 </span>
               </h3>
               <div className="space-y-4">
                 {session.videos.map((video, index) => (
-                  <VideoCard
+                  <YouTubeVideoCard
                     key={video.id}
                     video={video}
                     index={index}
+                    totalVideos={2}
+                    onWatchTimeUpdate={handleVideoWatchTimeUpdate}
                     onComplete={() => handleVideoComplete(index)}
                   />
                 ))}
               </div>
-              {!allVideosCompleted && (
-                <p className="text-center text-sm text-zinc-500 mt-4">
-                  Complete all 3 videos to unlock targets
-                </p>
+              
+              {/* Watch time requirement message */}
+              {!targetsUnlocked && (
+                <div className="mt-4 p-4 bg-zinc-900 rounded-xl border border-yellow-500/30 text-center">
+                  <p className="text-yellow-400 font-medium">
+                    Watch at least 1 hour total to unlock targets
+                  </p>
+                  <p className="text-sm text-zinc-500 mt-1">
+                    Current: {Math.floor(session.totalVideoWatchTime / 60)} min / 60 min required
+                  </p>
+                </div>
               )}
             </div>
 
