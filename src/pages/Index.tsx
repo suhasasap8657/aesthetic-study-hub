@@ -1,146 +1,270 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Calendar, BookOpen, Target, Sparkles, Zap } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import TabButton from "@/components/TabButton";
-import Guidelines from "@/components/Guidelines";
-import QuoteCard from "@/components/QuoteCard";
-import MonthPlan from "@/components/MonthPlan";
-import CountdownTimer from "@/components/CountdownTimer";
-import ProgressGraph from "@/components/ProgressGraph";
-import AlarmClock from "@/components/AlarmClock";
-import ProgressCalendar from "@/components/ProgressCalendar";
-import { januaryPlan, februaryPlan, marchPlan } from "@/data/monthlyPlans";
-import backgroundImage from "@/assets/background.jpg";
-
-type Tab = "home" | "guidelines" | "january" | "february" | "march";
+import { useState, useEffect } from 'react';
+import { Clock, Calendar, Target, BarChart3, Flame, Plus, X, Play, Pause, RotateCcw, ChevronRight, Check, AlertTriangle, XCircle, Video, FileQuestion, BookOpen } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import confetti from 'canvas-confetti';
+import RealTimeClock from '@/components/dashboard/RealTimeClock';
+import ExamTracker from '@/components/dashboard/ExamTracker';
+import StreakDisplay from '@/components/dashboard/StreakDisplay';
+import ProgressCalendar from '@/components/dashboard/ProgressCalendar';
+import AnalysisCharts from '@/components/dashboard/AnalysisCharts';
+import MonthlyTargets from '@/components/dashboard/MonthlyTargets';
+import SessionMode from '@/components/dashboard/SessionMode';
+import { getStreak, StreakData, calculateRank, saveStreak, getAllDailyProgress, DailyProgress } from '@/lib/firebase';
+import { getTodaySchedule, DayTarget, isBreakDay } from '@/data/studySchedule';
+import { getTodayKey } from '@/lib/firebase';
 
 const Index = () => {
-  const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<Tab>("home");
+  const [streak, setStreak] = useState<StreakData>({
+    currentStreak: 0,
+    longestStreak: 0,
+    lastCompletedDate: '',
+    rank: 'none'
+  });
+  const [todaySchedule, setTodaySchedule] = useState<DayTarget | null>(null);
+  const [showRankModal, setShowRankModal] = useState(false);
+  const [newRank, setNewRank] = useState<string>('');
+  const [activeSession, setActiveSession] = useState<{ type: 'video' | 'qs'; targetId: string; videoUrl?: string } | null>(null);
+  const [dailyProgress, setDailyProgress] = useState<Record<string, DailyProgress>>({});
 
-  const tabs = [
-    { id: "home" as Tab, label: "Home", icon: <Sparkles className="w-4 h-4" /> },
-    { id: "guidelines" as Tab, label: "Guidelines", icon: <Target className="w-4 h-4" /> },
-    { id: "january" as Tab, label: "January", icon: <Calendar className="w-4 h-4" /> },
-    { id: "february" as Tab, label: "February", icon: <Calendar className="w-4 h-4" /> },
-    { id: "march" as Tab, label: "March", icon: <Calendar className="w-4 h-4" /> },
-  ];
+  useEffect(() => {
+    loadData();
+  }, []);
 
-  const renderContent = () => {
-    switch (activeTab) {
-      case "home":
-        return (
-          <div className="space-y-6 animate-fade-in">
-            {/* Study Crusher CTA */}
-            <div className="bg-gradient-to-r from-pink-500/20 via-purple-500/20 to-orange-500/20 backdrop-blur-xl rounded-2xl p-6 border border-pink-500/30">
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-r from-pink-500 to-purple-500 flex items-center justify-center shrink-0">
-                    <Zap className="w-7 h-7 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-lg text-white">Study Crusher Mode</h3>
-                    <p className="text-sm text-zinc-400">Strict focus session with anti-cheat & Firebase tracking</p>
-                  </div>
-                </div>
-                <Button
-                  onClick={() => navigate('/crusher')}
-                  className="bg-gradient-to-r from-pink-500 to-purple-500 hover:opacity-90 text-white font-bold whitespace-nowrap"
-                >
-                  <Zap className="w-4 h-4 mr-2" />
-                  Launch Crusher
-                </Button>
-              </div>
-            </div>
+  const loadData = async () => {
+    const streakData = await getStreak();
+    setStreak(streakData);
+    
+    const schedule = getTodaySchedule();
+    setTodaySchedule(schedule);
+    
+    const progress = await getAllDailyProgress();
+    setDailyProgress(progress);
+  };
 
-            <QuoteCard />
-
-            <div className="grid md:grid-cols-2 gap-4">
-              <CountdownTimer />
-              <AlarmClock />
-            </div>
-
-            <ProgressCalendar />
-
-            <ProgressGraph />
-
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="glass-card rounded-2xl p-5">
-                <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
-                  <span className="w-8 h-8 rounded-lg bg-gradient-pastel flex items-center justify-center"><Target className="w-4 h-4 text-white" /></span>
-                  Current Focus
-                </h3>
-                <ul className="space-y-2 text-sm">
-                  <li className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-sakura" />Chemistry (60-70 QS daily)</li>
-                  <li className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-lavender" />Biology (80-90 QS daily)</li>
-                </ul>
-              </div>
-              <div className="glass-card rounded-2xl p-5">
-                <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
-                  <span className="w-8 h-8 rounded-lg bg-gradient-pastel flex items-center justify-center"><Calendar className="w-4 h-4 text-white" /></span>
-                  Timeline
-                </h3>
-                <ul className="space-y-2 text-sm">
-                  <li><span className="font-medium text-sakura">Jan:</span> Organic + College Exams</li>
-                  <li><span className="font-medium text-lavender">Feb:</span> Physical Chem + 1 chapter Inorganic</li>
-                  <li><span className="font-medium text-peach">Mar 6th:</span> Chem syllabus done</li>
-                  <li><span className="font-medium text-secondary">Mar 15 - May 1:</span> 2 mocks/day (~100 mocks)</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        );
-      case "guidelines": return <Guidelines />;
-      case "january": return <MonthPlan {...januaryPlan} />;
-      case "february": return <MonthPlan {...februaryPlan} />;
-      case "march": return <MonthPlan {...marchPlan} />;
-      default: return null;
+  const handleStreakUpdate = async (newStreak: number) => {
+    const oldRank = streak.rank;
+    const newRankValue = calculateRank(newStreak);
+    
+    const updatedStreak: StreakData = {
+      ...streak,
+      currentStreak: newStreak,
+      longestStreak: Math.max(streak.longestStreak, newStreak),
+      lastCompletedDate: getTodayKey(),
+      rank: newRankValue
+    };
+    
+    setStreak(updatedStreak);
+    await saveStreak(updatedStreak);
+    
+    // Check for rank promotion
+    if (newRankValue !== oldRank && newRankValue !== 'none') {
+      setNewRank(newRankValue);
+      setShowRankModal(true);
+      triggerConfetti(newRankValue);
     }
   };
 
+  const triggerConfetti = (rank: string) => {
+    const colors = {
+      bronze: ['#CD7F32', '#B87333', '#8B4513'],
+      silver: ['#C0C0C0', '#A8A8A8', '#808080'],
+      gold: ['#FFD700', '#FFA500', '#DAA520'],
+      diamond: ['#B9F2FF', '#87CEEB', '#00CED1']
+    };
+    
+    confetti({
+      particleCount: 150,
+      spread: 100,
+      origin: { y: 0.6 },
+      colors: colors[rank as keyof typeof colors] || ['#22c55e']
+    });
+  };
+
+  const getRankMessage = (rank: string) => {
+    const messages = {
+      bronze: "Congrats! You are now a Bronze rank.",
+      silver: "Congrats! You are promoted to Silver level. C'mon get that Diamond level then BMCRI is all yours.",
+      gold: "Congrats! You are just one rank away from BMCRI. Go push your level now!!!!",
+      diamond: "Congrats! You are here finally. Go rock the paper, BMCRI is all yours! You did it!!!!!"
+    };
+    return messages[rank as keyof typeof messages] || '';
+  };
+
+  const startSession = (type: 'video' | 'qs', targetId: string, videoUrl?: string) => {
+    setActiveSession({ type, targetId, videoUrl });
+  };
+
+  const endSession = () => {
+    setActiveSession(null);
+    loadData(); // Refresh data
+  };
+
+  if (activeSession) {
+    return (
+      <SessionMode 
+        type={activeSession.type}
+        targetId={activeSession.targetId}
+        videoUrl={activeSession.videoUrl}
+        onComplete={endSession}
+        onExit={endSession}
+      />
+    );
+  }
+
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      <div className="fixed inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${backgroundImage})` }} />
-      <div className="fixed inset-0 bg-gradient-to-br from-midnight-dark/80 via-midnight/70 to-midnight-dark/80 backdrop-blur-sm" />
-
-      <div className="relative z-10 min-h-screen">
-        <header className="glass sticky top-0 z-50 border-b border-border/30">
-          <div className="container mx-auto px-4 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-pastel flex items-center justify-center">
-                  <BookOpen className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h1 className="font-bold text-lg gradient-text">Mischile NEET Planner</h1>
-                  <p className="text-xs text-muted-foreground">NEET 2026 • Under 1k Rank</p>
-                </div>
+    <div className="min-h-screen bg-black text-white">
+      {/* Header */}
+      <header className="border-b border-zinc-800 bg-zinc-950/80 backdrop-blur-sm sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center">
+                <Target className="w-5 h-5 text-white" />
               </div>
-              <div className="text-right hidden sm:block">
-                <p className="text-sm font-medium">{new Date().toLocaleDateString("en-US", { weekday: "long" })}</p>
-                <p className="text-xs text-muted-foreground">{new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
+              <div>
+                <h1 className="font-bold text-lg">BMCRI Study Tracker</h1>
+                <p className="text-xs text-zinc-500">NEET 2026 Mission</p>
               </div>
             </div>
+            <StreakDisplay streak={streak} />
           </div>
-        </header>
+        </div>
+      </header>
 
-        <nav className="glass sticky top-[73px] z-40 border-b border-border/30 overflow-x-auto">
-          <div className="container mx-auto px-4 py-3">
-            <div className="flex gap-2 min-w-max">
-              {tabs.map((tab) => (<TabButton key={tab.id} active={activeTab === tab.id} onClick={() => setActiveTab(tab.id)} icon={tab.icon}>{tab.label}</TabButton>))}
+      {/* Main Content */}
+      <main className="container mx-auto px-4 py-6 space-y-6">
+        {/* Clock & Date */}
+        <RealTimeClock />
+        
+        {/* Exam Countdown */}
+        <ExamTracker />
+
+        {/* Tabs */}
+        <Tabs defaultValue="today" className="w-full">
+          <TabsList className="w-full bg-zinc-900 border border-zinc-800">
+            <TabsTrigger value="today" className="flex-1 data-[state=active]:bg-zinc-800">
+              <Target className="w-4 h-4 mr-2" />
+              Today
+            </TabsTrigger>
+            <TabsTrigger value="schedule" className="flex-1 data-[state=active]:bg-zinc-800">
+              <Calendar className="w-4 h-4 mr-2" />
+              Schedule
+            </TabsTrigger>
+            <TabsTrigger value="progress" className="flex-1 data-[state=active]:bg-zinc-800">
+              <BarChart3 className="w-4 h-4 mr-2" />
+              Analysis
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="today" className="mt-4">
+            {todaySchedule ? (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-bold">
+                    {todaySchedule.day} {todaySchedule.month} - Today's Targets
+                  </h2>
+                  {todaySchedule.isBreak && (
+                    <span className="px-3 py-1 bg-yellow-500/20 text-yellow-400 rounded-full text-sm">
+                      Break Day
+                    </span>
+                  )}
+                </div>
+                
+                <div className="space-y-3">
+                  {todaySchedule.targets.map((target, idx) => (
+                    <Card key={target.id} className="bg-zinc-900 border-zinc-800 p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          {target.type === 'video' && <Video className="w-5 h-5 text-purple-400" />}
+                          {target.type === 'qs' && <FileQuestion className="w-5 h-5 text-blue-400" />}
+                          {target.type === 'normal' && <BookOpen className="w-5 h-5 text-green-400" />}
+                          <div>
+                            <p className="font-medium">{target.text}</p>
+                            {target.type === 'video' && (
+                              <p className="text-xs text-zinc-500">Min 2 hours required</p>
+                            )}
+                          </div>
+                        </div>
+                        
+                        {target.type === 'video' ? (
+                          <Button
+                            onClick={() => startSession('video', target.id, target.videoUrl)}
+                            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:opacity-90"
+                          >
+                            <Play className="w-4 h-4 mr-2" />
+                            Start
+                          </Button>
+                        ) : target.type === 'qs' ? (
+                          <Button
+                            onClick={() => startSession('qs', target.id)}
+                            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:opacity-90"
+                          >
+                            <Play className="w-4 h-4 mr-2" />
+                            Start
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            className="border-zinc-700 hover:bg-zinc-800"
+                          >
+                            <Check className="w-4 h-4 mr-2" />
+                            Done
+                          </Button>
+                        )}
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <Card className="bg-zinc-900 border-zinc-800 p-8 text-center">
+                <p className="text-zinc-400">No schedule for today</p>
+                <p className="text-sm text-zinc-600 mt-2">Check the Schedule tab for upcoming targets</p>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="schedule" className="mt-4">
+            <MonthlyTargets onStartSession={startSession} />
+          </TabsContent>
+
+          <TabsContent value="progress" className="mt-4 space-y-6">
+            <ProgressCalendar dailyProgress={dailyProgress} />
+            <AnalysisCharts />
+          </TabsContent>
+        </Tabs>
+      </main>
+
+      {/* Rank Promotion Modal */}
+      <Dialog open={showRankModal} onOpenChange={setShowRankModal}>
+        <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-center text-2xl">
+              🎉 Rank Promotion! 🎉
+            </DialogTitle>
+          </DialogHeader>
+          <div className="text-center py-6">
+            <div className="text-6xl mb-4">
+              {newRank === 'bronze' && '🥉'}
+              {newRank === 'silver' && '🥈'}
+              {newRank === 'gold' && '🥇'}
+              {newRank === 'diamond' && '💎'}
             </div>
+            <h3 className="text-xl font-bold capitalize mb-4">{newRank} Rank!</h3>
+            <p className="text-zinc-300">{getRankMessage(newRank)}</p>
           </div>
-        </nav>
-
-        <main className="container mx-auto px-4 py-6 pb-20">{renderContent()}</main>
-
-        <footer className="glass border-t border-border/30 mt-auto">
-          <div className="container mx-auto px-4 py-4 text-center">
-            <p className="text-sm text-muted-foreground">WORK HARDER AND GET THINGS SORTED :) </p>
-          </div>
-        </footer>
-      </div>
+          <Button 
+            onClick={() => setShowRankModal(false)}
+            className="w-full bg-gradient-to-r from-purple-600 to-blue-600"
+          >
+            Continue Crushing It!
+          </Button>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

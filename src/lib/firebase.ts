@@ -9,18 +9,20 @@ import {
   query, 
   orderBy, 
   limit, 
-  getDocs
+  getDocs,
+  onSnapshot,
+  Timestamp
 } from "firebase/firestore";
 import { getAnalytics } from "firebase/analytics";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCAj23NPmCrVWzZFg9FwtBsm69HVpRqO18",
-  authDomain: "air-100-972eb.firebaseapp.com",
-  projectId: "air-100-972eb",
-  storageBucket: "air-100-972eb.firebasestorage.app",
-  messagingSenderId: "748658283943",
-  appId: "1:748658283943:web:9e1c10bb833c05b953d282",
-  measurementId: "G-28J4YJ4E8P"
+  apiKey: "AIzaSyDKl-g9e7KOqtfswrMMmiPaM7FrGYFRfKg",
+  authDomain: "bmcri-96a6e.firebaseapp.com",
+  projectId: "bmcri-96a6e",
+  storageBucket: "bmcri-96a6e.firebasestorage.app",
+  messagingSenderId: "372865523114",
+  appId: "1:372865523114:web:69623c886f7ac6984b1fd3",
+  measurementId: "G-XNE6W45Q6F"
 };
 
 // Initialize Firebase
@@ -34,199 +36,200 @@ if (typeof window !== 'undefined') {
 }
 export { analytics };
 
-// Types
-export interface VideoProgress {
-  id: string;
-  title: string;
-  completed: boolean;
-  watchedSeconds: number;
-}
-
-export interface DailySession {
-  date: string;
-  completed: boolean;
-  videosWatched: VideoProgress[];
-  targets: TargetProgress[];
-  totalOvertime: number;
-  distractionCount: number;
-  completionTime?: string;
-  sessionStarted?: string;
-  sessionLocked?: boolean;
-  aiTimeUsed?: number;
-  totalVideoWatchTime?: number;
-  status?: 'full' | 'partial' | 'missed';
-  failures?: string[];
-}
-
-export interface TargetProgress {
-  id: string;
-  name: string;
-  totalMinutes: number;
-  minMinutes: number;
-  status: 'locked' | 'ready' | 'in_progress' | 'done';
-  timeSpent: number;
-  overtime: number;
-  completedAt?: string;
-}
-
-export interface UserStats {
-  streakCount: number;
-  lastCompletedDate: string;
-  totalDaysCompleted: number;
-  longestStreak: number;
-}
-
-export interface CalendarMark {
-  date: string;
-  status: 'full' | 'partial' | 'missed';
-  targetsCompleted: number;
-  totalTargets: number;
-}
-
-export interface GraphData {
-  date: string;
-  completionPercentage: number;
-  targetsCompleted: number;
-  totalTargets: number;
-  overtimeMinutes: number;
-  distractionCount: number;
-}
-
-// Firebase helper functions
+// Helper functions
 export const getTodayKey = () => {
   const now = new Date();
   return now.toISOString().split('T')[0];
 };
 
-export const getYesterdayKey = () => {
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  return yesterday.toISOString().split('T')[0];
+export const formatDateKey = (date: Date) => {
+  return date.toISOString().split('T')[0];
 };
 
-export const saveDailySession = async (session: DailySession) => {
-  const docRef = doc(db, 'dailySessions', session.date);
-  await setDoc(docRef, session, { merge: true });
+// Types
+export interface ExamDate {
+  id: string;
+  name: string;
+  date: string;
+  createdAt: string;
+}
+
+export interface DailyProgress {
+  date: string;
+  targetsCompleted: string[];
+  totalTargets: number;
+  videoTime: number;
+  qsTime: number;
+  isComplete: boolean;
+}
+
+export interface SessionData {
+  type: 'video' | 'qs';
+  date: string;
+  duration: number;
+  startTime: string;
+  endTime: string;
+}
+
+export interface StreakData {
+  currentStreak: number;
+  longestStreak: number;
+  lastCompletedDate: string;
+  rank: 'none' | 'bronze' | 'silver' | 'gold' | 'diamond';
+}
+
+export interface UserData {
+  exams: ExamDate[];
+  dailyProgress: Record<string, DailyProgress>;
+  sessions: SessionData[];
+  streak: StreakData;
+}
+
+// Firebase operations
+export const saveExams = async (exams: ExamDate[]) => {
+  const docRef = doc(db, 'userData', 'exams');
+  await setDoc(docRef, { exams }, { merge: true });
+  localStorage.setItem('exams', JSON.stringify(exams));
 };
 
-export const getDailySession = async (date: string): Promise<DailySession | null> => {
-  const docRef = doc(db, 'dailySessions', date);
-  const docSnap = await getDoc(docRef);
-  return docSnap.exists() ? (docSnap.data() as DailySession) : null;
-};
-
-export const updateUserStats = async (stats: UserStats) => {
-  const docRef = doc(db, 'userStats', 'main');
-  await setDoc(docRef, stats, { merge: true });
-};
-
-export const getUserStats = async (): Promise<UserStats | null> => {
-  const docRef = doc(db, 'userStats', 'main');
-  const docSnap = await getDoc(docRef);
-  return docSnap.exists() ? (docSnap.data() as UserStats) : null;
-};
-
-export const getCalendarMarks = async (year: number, month: number): Promise<CalendarMark[]> => {
-  const startDate = `${year}-${String(month + 1).padStart(2, '0')}-01`;
-  const endDate = `${year}-${String(month + 1).padStart(2, '0')}-31`;
-  
-  const sessionsRef = collection(db, 'dailySessions');
-  const q = query(sessionsRef, orderBy('date'), limit(100));
-  const querySnapshot = await getDocs(q);
-  
-  const marks: CalendarMark[] = [];
-  querySnapshot.forEach((doc) => {
-    const session = doc.data() as DailySession;
-    if (session.date >= startDate && session.date <= endDate) {
-      const targetsCompleted = session.targets?.filter(t => t.status === 'done').length || 0;
-      const totalTargets = session.targets?.length || 4;
-      
-      let status: 'full' | 'partial' | 'missed' = 'missed';
-      if (session.completed) {
-        status = 'full';
-      } else if (targetsCompleted > 0) {
-        status = 'partial';
-      }
-      
-      marks.push({
-        date: session.date,
-        status,
-        targetsCompleted,
-        totalTargets
-      });
+export const getExams = async (): Promise<ExamDate[]> => {
+  try {
+    const docRef = doc(db, 'userData', 'exams');
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      localStorage.setItem('exams', JSON.stringify(data.exams || []));
+      return data.exams || [];
     }
-  });
-  
-  return marks;
+  } catch (error) {
+    console.error('Firebase error, using localStorage:', error);
+  }
+  const local = localStorage.getItem('exams');
+  return local ? JSON.parse(local) : [];
 };
 
-export const getLast30DaysStats = async (): Promise<GraphData[]> => {
-  const sessionsRef = collection(db, 'dailySessions');
-  const q = query(sessionsRef, orderBy('date', 'desc'), limit(30));
-  const querySnapshot = await getDocs(q);
+export const saveDailyProgress = async (progress: DailyProgress) => {
+  const docRef = doc(db, 'dailyProgress', progress.date);
+  await setDoc(docRef, progress, { merge: true });
   
-  const stats: GraphData[] = [];
-  querySnapshot.forEach((doc) => {
-    const session = doc.data() as DailySession;
-    const targetsCompleted = session.targets?.filter(t => t.status === 'done').length || 0;
-    const totalTargets = session.targets?.length || 4;
-    
-    let completionPercentage = 0;
-    if (session.completed) {
-      completionPercentage = 100;
-    } else if (targetsCompleted > 0) {
-      completionPercentage = Math.round((targetsCompleted / totalTargets) * 100);
+  // Also save to localStorage
+  const allProgress = JSON.parse(localStorage.getItem('dailyProgress') || '{}');
+  allProgress[progress.date] = progress;
+  localStorage.setItem('dailyProgress', JSON.stringify(allProgress));
+};
+
+export const getDailyProgress = async (date: string): Promise<DailyProgress | null> => {
+  try {
+    const docRef = doc(db, 'dailyProgress', date);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return docSnap.data() as DailyProgress;
     }
+  } catch (error) {
+    console.error('Firebase error:', error);
+  }
+  
+  const allProgress = JSON.parse(localStorage.getItem('dailyProgress') || '{}');
+  return allProgress[date] || null;
+};
+
+export const getAllDailyProgress = async (): Promise<Record<string, DailyProgress>> => {
+  const progressMap: Record<string, DailyProgress> = {};
+  
+  try {
+    const progressRef = collection(db, 'dailyProgress');
+    const q = query(progressRef, orderBy('date', 'desc'), limit(100));
+    const querySnapshot = await getDocs(q);
     
-    stats.push({
-      date: session.date,
-      completionPercentage,
-      targetsCompleted,
-      totalTargets,
-      overtimeMinutes: session.totalOvertime || 0,
-      distractionCount: session.distractionCount || 0
+    querySnapshot.forEach((doc) => {
+      progressMap[doc.id] = doc.data() as DailyProgress;
     });
-  });
+    
+    localStorage.setItem('dailyProgress', JSON.stringify(progressMap));
+  } catch (error) {
+    console.error('Firebase error, using localStorage:', error);
+    return JSON.parse(localStorage.getItem('dailyProgress') || '{}');
+  }
   
-  return stats.reverse();
+  return progressMap;
 };
 
-// Log failures
-export const logFailure = async (date: string, reason: string) => {
-  const session = await getDailySession(date);
-  const failures = session?.failures || [];
-  failures.push(`${new Date().toISOString()}: ${reason}`);
+export const saveSession = async (session: SessionData) => {
+  const docRef = doc(db, 'sessions', `${session.date}-${session.type}-${Date.now()}`);
+  await setDoc(docRef, session);
   
-  await saveDailySession({
-    ...session,
-    date,
-    completed: false,
-    videosWatched: session?.videosWatched || [],
-    targets: session?.targets || [],
-    totalOvertime: session?.totalOvertime || 0,
-    distractionCount: session?.distractionCount || 0,
-    failures
-  });
+  // Also save to localStorage
+  const sessions = JSON.parse(localStorage.getItem('sessions') || '[]');
+  sessions.push(session);
+  localStorage.setItem('sessions', JSON.stringify(sessions));
 };
 
-// Update video watch time
-export const updateVideoWatchTime = async (date: string, seconds: number) => {
-  const session = await getDailySession(date);
-  if (session) {
-    await saveDailySession({
-      ...session,
-      totalVideoWatchTime: (session.totalVideoWatchTime || 0) + seconds
+export const getSessions = async (): Promise<SessionData[]> => {
+  try {
+    const sessionsRef = collection(db, 'sessions');
+    const q = query(sessionsRef, orderBy('date', 'desc'), limit(100));
+    const querySnapshot = await getDocs(q);
+    
+    const sessions: SessionData[] = [];
+    querySnapshot.forEach((doc) => {
+      sessions.push(doc.data() as SessionData);
     });
+    
+    localStorage.setItem('sessions', JSON.stringify(sessions));
+    return sessions;
+  } catch (error) {
+    console.error('Firebase error:', error);
+    return JSON.parse(localStorage.getItem('sessions') || '[]');
   }
 };
 
-// Check if yesterday was incomplete (for failure popup)
-export const checkYesterdayStatus = async (): Promise<boolean> => {
-  const yesterday = getYesterdayKey();
-  const session = await getDailySession(yesterday);
+export const saveStreak = async (streak: StreakData) => {
+  const docRef = doc(db, 'userData', 'streak');
+  await setDoc(docRef, streak, { merge: true });
+  localStorage.setItem('streak', JSON.stringify(streak));
+};
+
+export const getStreak = async (): Promise<StreakData> => {
+  const defaultStreak: StreakData = {
+    currentStreak: 0,
+    longestStreak: 0,
+    lastCompletedDate: '',
+    rank: 'none'
+  };
   
-  if (session && session.sessionStarted && !session.completed) {
-    return true; // Yesterday was incomplete
+  try {
+    const docRef = doc(db, 'userData', 'streak');
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      const data = docSnap.data() as StreakData;
+      localStorage.setItem('streak', JSON.stringify(data));
+      return data;
+    }
+  } catch (error) {
+    console.error('Firebase error:', error);
   }
-  return false;
+  
+  const local = localStorage.getItem('streak');
+  return local ? JSON.parse(local) : defaultStreak;
+};
+
+// Calculate rank based on streak
+export const calculateRank = (streak: number): 'none' | 'bronze' | 'silver' | 'gold' | 'diamond' => {
+  if (streak >= 74) return 'diamond';
+  if (streak >= 54) return 'gold';
+  if (streak >= 33) return 'silver';
+  if (streak >= 13) return 'bronze';
+  return 'none';
+};
+
+// Listen for real-time updates
+export const subscribeToProgress = (callback: (data: Record<string, DailyProgress>) => void) => {
+  const progressRef = collection(db, 'dailyProgress');
+  return onSnapshot(progressRef, (snapshot) => {
+    const progressMap: Record<string, DailyProgress> = {};
+    snapshot.forEach((doc) => {
+      progressMap[doc.id] = doc.data() as DailyProgress;
+    });
+    callback(progressMap);
+  });
 };
