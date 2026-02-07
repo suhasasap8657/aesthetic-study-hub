@@ -23,7 +23,7 @@ const SessionMode = ({ type, targetId, videoUrl, onComplete, onExit }: SessionMo
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const videoRef = useRef<HTMLIFrameElement>(null);
 
-  const requiredSeconds = type === 'video' ? 7200 : 0; // 2 hours for video
+  const requiredSeconds = type === 'video' ? 5400 : 0; // 1.5 hours for video
 
   useEffect(() => {
     enterFullscreen();
@@ -132,7 +132,8 @@ const SessionMode = ({ type, targetId, videoUrl, onComplete, onExit }: SessionMo
   const getYouTubeEmbedUrl = (url: string) => {
     const videoId = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/)?.[1];
     if (videoId) {
-      return `https://www.youtube.com/embed/${videoId}?autoplay=0&controls=0&modestbranding=1&rel=0&disablekb=1`;
+      // Enable all YouTube controls including speed, quality, seeking
+      return `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1&modestbranding=1&rel=0&fs=0`;
     }
     return url;
   };
@@ -219,34 +220,11 @@ const SessionMode = ({ type, targetId, videoUrl, onComplete, onExit }: SessionMo
               src={getYouTubeEmbedUrl(videoUrl)}
               className="w-full h-full"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
             />
-            {/* Custom overlay controls */}
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-              <div className="flex items-center justify-center gap-4">
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  onClick={rewind15}
-                  className="text-white hover:bg-white/20"
-                >
-                  <RotateCcw className="w-6 h-6" />
-                </Button>
-                <Button
-                  size="lg"
-                  onClick={() => setIsPlaying(!isPlaying)}
-                  className="bg-purple-600 hover:bg-purple-700 rounded-full w-14 h-14"
-                >
-                  {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-1" />}
-                </Button>
-                <Button
-                  variant="ghost"
-                  onClick={toggleSpeed}
-                  className="text-white hover:bg-white/20 font-bold"
-                >
-                  {playbackSpeed}x
-                </Button>
-              </div>
+            {/* Info overlay */}
+            <div className="absolute top-4 right-4 bg-black/70 px-3 py-2 rounded-lg">
+              <p className="text-xs text-zinc-400">Use YouTube controls for speed & quality</p>
+              <p className="text-xs text-green-400">Timer tracks your real time spent</p>
             </div>
           </div>
         ) : (
