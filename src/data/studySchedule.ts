@@ -19,6 +19,7 @@ export interface TargetItem {
 
 // Video links
 const VIDEO_LINKS = [
+  "https://youtu.be/gWVIRjGKnAk?si=PKfy1uozxSfjjrep", // Alcohol, Phenol, Ether - Feb 7
   "https://www.youtube.com/live/8SiHbc0gP5s?si=oxh_j1Erc7YVXRnG",
   "https://www.youtube.com/live/nyIf7AXZ4I8?si=2-rInc1rZvXufwd9"
 ];
@@ -36,7 +37,7 @@ const createTarget = (text: string, type: 'video' | 'qs' | 'normal' = 'normal', 
 export const STUDY_SCHEDULE: DayTarget[] = [
   // FEBRUARY 2026
   { id: 'd-2026-02-07', date: '2026-02-07', day: 7, month: 'February', year: 2026, targets: [
-    { id: 't1', ...createTarget('Alcohol, Phenol, Ether - Video Lecture', 'video', VIDEO_LINKS[0]) },
+    { id: 't1', ...createTarget('Alcohol, Phenol, Ether - Video Lecture', 'video', VIDEO_LINKS[0]) }, // Uses the new video
     { id: 't2', ...createTarget('Alcohol, Phenol, Ether - Questions Practice', 'qs') },
     { id: 't3', ...createTarget('Biology Chapter', 'normal') },
     { id: 't4', ...createTarget('Revision & Doubts', 'normal') }
